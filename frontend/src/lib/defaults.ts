@@ -1,0 +1,22 @@
+import type { ProjectFormData } from '../types';
+
+export const defaultFormData: ProjectFormData = {
+  patchline: 'release',
+  hytaleVersion: '',
+  modLicense: 'MIT',
+  group: 'com.replaceme.modid',
+  manifestGroup: 'com.replaceme',
+  modName: 'Replace Me',
+  mainClass: 'Main',
+  modAuthor: 'replace_me',
+  modId: 'replace_me',
+  modDescription: 'Replace me',
+  modUrl: 'https://example.com',
+  version: '0.0.1',
+  versionCatalogMode: 'none',
+  buildDsl: 'groovy',
+  projectLanguage: 'java',
+  javaVersion: 25,
+  disabledByDefault: false,
+  includesPack: true
+};
