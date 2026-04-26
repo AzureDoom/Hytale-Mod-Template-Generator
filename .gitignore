@@ -1,3 +1,4 @@
 server/cache/*
 !server/cache/.gitkeep
 node_modules
+.idea
