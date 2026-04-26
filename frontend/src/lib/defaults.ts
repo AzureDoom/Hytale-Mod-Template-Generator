@@ -18,5 +18,12 @@ export const defaultFormData: ProjectFormData = {
   projectLanguage: 'java',
   javaVersion: 25,
   disabledByDefault: false,
-  includesPack: true
+  includesPack: true,
+  usePublisher: false,
+  publishModtale: true,
+  modtaleProjectId: '',
+  publishCurseforge: true,
+  curseforgeProjectId: '',
+  publishModifold: true,
+  modifoldProjectSlug: '',
 };

@@ -46,6 +46,10 @@ const TOOLTIPS = {
   modDescription: 'A short description of what your mod does. Written into the mod manifest.',
   includesPack: 'Whether your mod bundles an asset pack (textures, models, sounds, etc.).',
   disabledByDefault: 'If enabled, the mod will be disabled when first installed and must be manually enabled by the user.',
+  usePublisher: 'Adds the HytalePublisher Gradle plugin to your project, enabling one-command publishing to mod platforms.',
+  publishModtale: 'Publish to Modtale. Your Project ID is shown in the right-hand panel on your Modtale project page.',
+  publishCurseforge: 'Publish to CurseForge. Your Project ID is shown in the Details panel on the right side of your CurseForge project page.',
+  publishModifold: 'Publish to Modifold. Your project slug is the last segment of your Modifold project URL (e.g. modifold.com/mod/your-slug).',
 };
 
 function Tooltip({ text }: { text: string }) {
@@ -172,6 +176,75 @@ export function ProjectForm({ value, versions, onChange, onSubmit, loading }: Pr
           <input name="disabledByDefault" type="checkbox" checked={value.disabledByDefault} onChange={handleInput} />
           <span>Disabled by default <Tooltip text={TOOLTIPS.disabledByDefault} /></span>
         </label>
+      </div>
+
+      <SectionHeading>Publishing</SectionHeading>
+      <div className="grid">
+        <label className="checkbox full">
+          <input name="usePublisher" type="checkbox" checked={value.usePublisher} onChange={handleInput} />
+          <span>Include HytalePublisher plugin <Tooltip text={TOOLTIPS.usePublisher} /></span>
+        </label>
+
+        {value.usePublisher && (
+          <>
+            <label className="checkbox full">
+              <input name="publishModtale" type="checkbox" checked={value.publishModtale} onChange={handleInput} />
+              <span>
+                Publish to Modtale{' '}
+                <Tooltip text={TOOLTIPS.publishModtale} />
+              </span>
+            </label>
+            {value.publishModtale && (
+              <label className="full">
+                <span>Modtale Project ID</span>
+                <input
+                  name="modtaleProjectId"
+                  value={value.modtaleProjectId}
+                  onChange={handleInput}
+                  placeholder="your-modtale-project-id"
+                />
+              </label>
+            )}
+
+            <label className="checkbox full">
+              <input name="publishCurseforge" type="checkbox" checked={value.publishCurseforge} onChange={handleInput} />
+              <span>
+                Publish to CurseForge{' '}
+                <Tooltip text={TOOLTIPS.publishCurseforge} />
+              </span>
+            </label>
+            {value.publishCurseforge && (
+              <label className="full">
+                <span>CurseForge Project ID</span>
+                <input
+                  name="curseforgeProjectId"
+                  value={value.curseforgeProjectId}
+                  onChange={handleInput}
+                  placeholder="123456"
+                />
+              </label>
+            )}
+
+            <label className="checkbox full">
+              <input name="publishModifold" type="checkbox" checked={value.publishModifold} onChange={handleInput} />
+              <span>
+                Publish to Modifold{' '}
+                <Tooltip text={TOOLTIPS.publishModifold} />
+              </span>
+            </label>
+            {value.publishModifold && (
+              <label className="full">
+                <span>Modifold Project Slug</span>
+                <input
+                  name="modifoldProjectSlug"
+                  value={value.modifoldProjectSlug}
+                  onChange={handleInput}
+                  placeholder="your-modifold-project-slug"
+                />
+              </label>
+            )}
+          </>
+        )}
       </div>
 
       <button className="full-width" onClick={onSubmit} disabled={loading}>

@@ -39,4 +39,11 @@ export interface ProjectFormData {
   disabledByDefault: boolean;
   includesPack: boolean;
   javaVersion: number;
+  usePublisher: boolean;
+  publishModtale: boolean;
+  modtaleProjectId: string;
+  publishCurseforge: boolean;
+  curseforgeProjectId: string;
+  publishModifold: boolean;
+  modifoldProjectSlug: string;
 }

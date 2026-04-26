@@ -42,4 +42,11 @@ export interface ProjectInput {
   curseforgeID: string;
   disabledByDefault: boolean;
   includesPack: boolean;
+  usePublisher: boolean;
+  publishModtale: boolean;
+  modtaleProjectId: string;
+  publishCurseforge: boolean;
+  curseforgeProjectId: string;
+  publishModifold: boolean;
+  modifoldProjectSlug: string;
 }

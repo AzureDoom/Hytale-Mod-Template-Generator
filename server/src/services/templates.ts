@@ -22,8 +22,8 @@ function hytaleToolsPluginLine(data: ProjectInput) {
   }
 
   return data.buildDsl === 'kotlin'
-    ? '    id("com.azuredoom.hytale-tools") version "1.0.+"\n'
-    : "    id 'com.azuredoom.hytale-tools' version '1.0.+'\n";
+      ? '    id("com.azuredoom.hytale-tools") version "1.0.+"\n'
+      : "    id 'com.azuredoom.hytale-tools' version '1.0.+'\n";
 }
 
 function kotlinPluginLine(data: ProjectInput) {
@@ -34,8 +34,50 @@ function kotlinPluginLine(data: ProjectInput) {
   }
 
   return data.buildDsl === 'kotlin'
-    ? `    kotlin("jvm") version "${KOTLIN_VERSION}"\n`
-    : `    id 'org.jetbrains.kotlin.jvm' version '${KOTLIN_VERSION}'\n`;
+      ? `    kotlin("jvm") version "${KOTLIN_VERSION}"\n`
+      : `    id 'org.jetbrains.kotlin.jvm' version '${KOTLIN_VERSION}'\n`;
+}
+
+function hytalePublisherPluginLine(data: ProjectInput) {
+  if (!data.usePublisher) return '';
+  return data.buildDsl === 'kotlin'
+      ? '    id("com.azuredoom.hytalepublisher") version "1.0.0"\n'
+      : "    id 'com.azuredoom.hytalepublisher' version '1.0.0'\n";
+}
+
+function hytalePublisherBlock(data: ProjectInput) {
+  if (!data.usePublisher) return '';
+
+  const platforms: string[] = [];
+
+  if (data.publishModtale) {
+    const id = data.modtaleProjectId || 'your-modtale-project-id';
+    if (data.buildDsl === 'kotlin') {
+      platforms.push(`    modtale {\n        enabled = true\n        projectId = property("modtale_project_id").toString()\n    }`);
+    } else {
+      platforms.push(`    modtale {\n        enabled = true\n        projectId = project.modtale_project_id.toString()\n    }`);
+    }
+  }
+
+  if (data.publishCurseforge) {
+    if (data.buildDsl === 'kotlin') {
+      platforms.push(`    curseforge {\n        enabled = true\n        projectId = property("curseforge_project_id").toString()\n    }`);
+    } else {
+      platforms.push(`    curseforge {\n        enabled = true\n        projectId = project.curseforge_project_id.toString()\n    }`);
+    }
+  }
+
+  if (data.publishModifold) {
+    if (data.buildDsl === 'kotlin') {
+      platforms.push(`    modifold {\n        enabled = true\n        projectId = property("modifold_project_slug").toString()\n    }`);
+    } else {
+      platforms.push(`    modifold {\n        enabled = true\n        projectId = project.modifold_project_slug.toString()\n    }`);
+    }
+  }
+
+  if (platforms.length === 0) return '';
+
+  return `\nhytalePublisher {\n${platforms.join('\n\n')}\n}\n`;
 }
 
 function maybeCatalogComment(data: ProjectInput) {
@@ -84,7 +126,11 @@ server_version = ${data.hytaleVersion}
 manifest_dependencies = ${data.manifestDependencies}
 manifest_opt_dependencies = ${data.manifestOptionalDependencies}
 curseforgeID = ${data.curseforgeID}
-`;
+${data.usePublisher ? `
+# HytalePublisher
+${data.publishModtale ? `modtale_project_id = ${data.modtaleProjectId || 'your-modtale-project-id'}` : ''}
+${data.publishCurseforge ? `curseforge_project_id = ${data.curseforgeProjectId || '123456'}` : ''}
+${data.publishModifold ? `modifold_project_slug = ${data.modifoldProjectSlug || 'your-modifold-project-slug'}` : ''}`.trimEnd().split('\n').filter(l => l.trim()).join('\n') + '\n' : ''}`;
 }
 
 export function buildManifestFile(data: ProjectInput) {
@@ -191,8 +237,8 @@ public class ${parsedMain.className} extends JavaPlugin {
 export function buildSettingsFile(data: ProjectInput) {
   const projectName = data.modName.replace(/'/g, "\\'");
   const catalogBlock = hasVersionCatalog(data)
-    ? data.buildDsl === 'kotlin'
-      ? `
+      ? data.buildDsl === 'kotlin'
+          ? `
 
 dependencyResolutionManagement {
     versionCatalogs {
@@ -202,7 +248,7 @@ dependencyResolutionManagement {
     }
 }
 `
-      : `
+          : `
 
 dependencyResolutionManagement {
     versionCatalogs {
@@ -212,7 +258,7 @@ dependencyResolutionManagement {
     }
 }
 `
-    : '\n';
+      : '\n';
 
   if (data.buildDsl === 'kotlin') {
     return {
@@ -265,10 +311,10 @@ export function buildBuildFile(data: ProjectInput) {
     const pluginBlock = `plugins {
     idea
     java
-${hytaleToolsPluginLine(data)}${kotlinPlugin}}
+${hytaleToolsPluginLine(data)}${kotlinPlugin}${hytalePublisherPluginLine(data)}}
 `;
     const sourceSets = data.projectLanguage === 'kotlin'
-      ? `
+        ? `
 sourceSets {
     main {
         java.setSrcDirs(emptyList<String>())
@@ -276,7 +322,7 @@ sourceSets {
     }
 }
 `
-      : '';
+        : '';
 
     return {
       path: 'build.gradle.kts',
@@ -320,13 +366,13 @@ idea {
         isDownloadJavadoc = true
     }
 }
-`
+${hytalePublisherBlock(data)}`
     };
   }
 
   const kotlinPlugin = kotlinPluginLine(data);
   const sourceSets = data.projectLanguage === 'kotlin'
-    ? `
+      ? `
 sourceSets {
     main {
         java.srcDirs = []
@@ -334,14 +380,14 @@ sourceSets {
     }
 }
 `
-    : '';
+      : '';
 
   return {
     path: 'build.gradle',
     contents: `plugins {
     id 'idea'
     id 'java'
-${hytaleToolsPluginLine(data)}${kotlinPlugin}}${catalogComment}
+${hytaleToolsPluginLine(data)}${kotlinPlugin}${hytalePublisherPluginLine(data)}}${catalogComment}
 
 javadoc {
     options.addStringOption('Xdoclint:-missing', '-quiet')
@@ -385,7 +431,7 @@ idea {
         downloadJavadoc = true
     }
 }
-`
+${hytalePublisherBlock(data)}`
   };
 }
 

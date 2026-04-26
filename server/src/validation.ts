@@ -40,5 +40,12 @@ export const projectInputSchema = z.object({
   manifestOptionalDependencies: z.string().default(''),
   curseforgeID: z.string().default(''),
   disabledByDefault: z.boolean().default(false),
-  includesPack: z.boolean().default(true)
+  includesPack: z.boolean().default(true),
+  usePublisher: z.boolean().default(false),
+  publishModtale: z.boolean().default(true),
+  modtaleProjectId: z.string().default(''),
+  publishCurseforge: z.boolean().default(true),
+  curseforgeProjectId: z.string().default(''),
+  publishModifold: z.boolean().default(true),
+  modifoldProjectSlug: z.string().default(''),
 });
