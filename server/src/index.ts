@@ -21,7 +21,7 @@ app.use('/api', generateRouter);
 app.use('/api', appConfigRouter);
 
 app.use(express.static(frontendDist));
-app.get('*', (_request, response) => {
+app.get('/*splat', (_request, response) => {
   response.sendFile(path.join(frontendDist, 'index.html'));
 });
 
