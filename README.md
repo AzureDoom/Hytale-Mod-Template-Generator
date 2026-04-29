@@ -188,6 +188,37 @@ See [Project Configuration Options](#project-configuration-options) for all fiel
 
 ---
 
+### `GET /api/status`
+
+Returns a live health snapshot of every upstream service the generator depends on, plus a couple of related AzureDoom hosts.
+
+**Response**
+
+```json
+{
+  "overall": "up",
+  "generatedAt": "2026-04-28T15:00:00.000Z",
+  "services": [
+    {
+      "id": "hytale-maven-release",
+      "name": "Hytale Maven (release)",
+      "url": "https://maven.hytale.com/release",
+      "required": true,
+      "state": "up",
+      "latencyMs": 142,
+      "httpStatus": 200,
+      "message": "OK (200)",
+      "checkedAt": "2026-04-28T15:00:00.000Z"
+    }
+  ]
+}
+```
+Returns HTTP 503 when any required service is down so external
+uptime monitors can alert on the response code directly. The
+response is cached for 5 seconds to absorb auto-refresh traffic.
+
+---
+
 ## Project Configuration Options
 
 These are the fields accepted by `POST /api/generate` and rendered in the form UI.

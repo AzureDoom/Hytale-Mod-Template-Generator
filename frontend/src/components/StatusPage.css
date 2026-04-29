@@ -1,0 +1,268 @@
+/*
+ * Append this to your existing global stylesheet (e.g. frontend/src/index.css
+ * or wherever the rest of the app's styles live). Class names are scoped
+ * with a `status-page__` / `service__` prefix so they won't collide with
+ * the generator form.
+ *
+ * Colors use neutral hex values; if your app already exposes CSS custom
+ * properties for theme colors, replace the hard-coded hexes below with
+ * your tokens (e.g. var(--color-success) etc.).
+ */
+
+ .status-page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+    font-family: inherit;
+    color: inherit;
+  }
+  
+  .status-page__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .status-page__title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0 0 0.25rem;
+  }
+  
+  .status-page__subtitle {
+    margin: 0;
+    opacity: 0.7;
+    font-size: 0.95rem;
+  }
+  
+  .status-page__back {
+    background: transparent;
+    border: 1px solid currentColor;
+    border-radius: 8px;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.85;
+  }
+  .status-page__back:hover {
+    opacity: 1;
+  }
+  
+  /* Overall banner ---------------------------------------------------------- */
+  
+  .status-banner {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1.25rem;
+    border: 1px solid transparent;
+  }
+  
+  .status-banner strong {
+    font-size: 1.1rem;
+  }
+  
+  .status-banner span {
+    font-size: 0.85rem;
+    opacity: 0.85;
+  }
+  
+  .status-banner--up {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #065f46;
+  }
+  .status-banner--degraded {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+  }
+  .status-banner--down {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+  }
+  .status-banner--loading {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #1e293b;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .status-banner--up {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #6ee7b7;
+    }
+    .status-banner--degraded {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.4);
+      color: #fcd34d;
+    }
+    .status-banner--down {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+    .status-banner--loading {
+      background: rgba(148, 163, 184, 0.12);
+      border-color: rgba(148, 163, 184, 0.3);
+      color: #cbd5e1;
+    }
+  }
+  
+  /* Service list ------------------------------------------------------------ */
+  
+  .status-page__services {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .status-page__placeholder {
+    padding: 1.5rem;
+    text-align: center;
+    border: 1px dashed currentColor;
+    border-radius: 12px;
+    opacity: 0.6;
+  }
+  
+  .service {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 1.125rem;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    background: rgba(148, 163, 184, 0.05);
+  }
+  
+  .service__main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+  
+  .service__name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .service__optional {
+    font-size: 0.65rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.2);
+    opacity: 0.85;
+  }
+  
+  .service__url {
+    font-size: 0.8rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    opacity: 0.7;
+    text-decoration: none;
+    word-break: break-all;
+  }
+  .service__url:hover {
+    text-decoration: underline;
+  }
+  
+  .service__message {
+    margin: 0.25rem 0 0;
+    font-size: 0.85rem;
+    opacity: 0.8;
+  }
+  
+  .service__meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+  
+  .service__badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+  }
+  
+  .service__badge--up {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  .service__badge--degraded {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  .service__badge--down {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .service__badge--up {
+      background: rgba(16, 185, 129, 0.2);
+      color: #6ee7b7;
+    }
+    .service__badge--degraded {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fcd34d;
+    }
+    .service__badge--down {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+    }
+  }
+  
+  .service__latency {
+    font-size: 0.8rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    opacity: 0.7;
+  }
+  
+  /* Footer ------------------------------------------------------------------ */
+  
+  .status-page__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.2);
+    font-size: 0.85rem;
+    opacity: 0.85;
+  }
+  
+  .status-page__refresh {
+    background: transparent;
+    border: 1px solid currentColor;
+    border-radius: 8px;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: inherit;
+  }
+  .status-page__refresh:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }

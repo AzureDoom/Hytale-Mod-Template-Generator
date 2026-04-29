@@ -7,6 +7,7 @@ import { healthRouter } from './routes/health.js';
 import { versionsRouter } from './routes/versions.js';
 import { generateRouter } from './routes/generate.js';
 import { appConfigRouter } from './routes/app-config.js';
+import { statusRouter } from './routes/status.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const frontendDist = path.resolve(__dirname, '../../frontend/dist');
@@ -19,7 +20,7 @@ app.use('/api', healthRouter);
 app.use('/api', versionsRouter);
 app.use('/api', generateRouter);
 app.use('/api', appConfigRouter);
-
+app.use('/api', statusRouter);
 app.use(express.static(frontendDist));
 app.get('/*splat', (_request, response) => {
   response.sendFile(path.join(frontendDist, 'index.html'));

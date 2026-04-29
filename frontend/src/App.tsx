@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { StatusPage } from './components/StatusPage';
 import { ProjectForm } from './components/ProjectForm';
 import { PreviewPanel } from './components/PreviewPanel';
 import { defaultFormData } from './lib/defaults';
@@ -7,12 +8,23 @@ import type { ProjectFormData } from './types';
 
 const FALLBACK_VERSION = '2026.02.19-1a311a592';
 
+function useHashRoute(): string {
+  const [hash, setHash] = useState(window.location.hash);
+  useEffect(() => {
+    const onChange = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', onChange);
+    return () => window.removeEventListener('hashchange', onChange);
+  }, []);
+  return hash;
+}
+
 export function App() {
   const [formData, setFormData] = useState<ProjectFormData>(defaultFormData);
   const [versions, setVersions] = useState<string[]>([FALLBACK_VERSION]);
   const [status, setStatus] = useState('Loading versions…');
   const [showStatusBanner, setShowStatusBanner] = useState(false);
   const [loading, setLoading] = useState(false);
+  const hash = useHashRoute();
 
   useEffect(() => {
     getAppConfig()
@@ -40,6 +52,16 @@ export function App() {
       });
   }, [formData.patchline]);
 
+  if (hash === '#/status' || hash === '#status') {
+    return (
+      <StatusPage
+        onBack={() => {
+          window.location.hash = '';
+        }}
+      />
+    );
+  }
+  
   async function handleSubmit() {
     setLoading(true);
     setStatus('Generating ZIP…');
@@ -121,7 +143,7 @@ export function App() {
           </div>
         </div>
 
-        <footer className="os-footer">© 2026 AzureDoom</footer>
+        <footer className="os-footer">© 2026 AzureDoom | <a href="#/status">System status</a></footer>
       </div>
     </>
   );
