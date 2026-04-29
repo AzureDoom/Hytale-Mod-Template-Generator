@@ -41,8 +41,8 @@ function kotlinPluginLine(data: ProjectInput) {
 function hytalePublisherPluginLine(data: ProjectInput) {
   if (!data.usePublisher) return '';
   return data.buildDsl === 'kotlin'
-      ? '    id("com.azuredoom.hytalepublisher") version "1.0.1"\n'
-      : "    id 'com.azuredoom.hytalepublisher' version '1.0.1'\n";
+      ? '    id("com.azuredoom.hytalepublisher") version "1.1.1"\n'
+      : "    id 'com.azuredoom.hytalepublisher' version '1.1.1'\n";
 }
 
 function hytalePublisherBlock(data: ProjectInput) {
