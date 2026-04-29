@@ -359,7 +359,6 @@ repositories {
     mavenCentral()
 }
 ${sourceSets}
-
 idea {
     module {
         isDownloadSources = true
@@ -420,11 +419,6 @@ repositories {
     mavenCentral()
 }
 ${sourceSets}
-def serverRunDir = file("$projectDir/run")
-if (!serverRunDir.exists()) {
-    serverRunDir.mkdirs()
-}
-
 idea {
     module {
         downloadSources = true
