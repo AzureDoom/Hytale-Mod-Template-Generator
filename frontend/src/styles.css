@@ -88,6 +88,90 @@ body {
 }
 
 /* ═══════════════════════════════════════════════
+   SITE HEADER
+═══════════════════════════════════════════════ */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  background: linear-gradient(
+    to bottom,
+    rgba(2, 12, 28, 0.92),
+    rgba(2, 12, 28, 0.72),
+    transparent
+  );
+  backdrop-filter: blur(10px);
+}
+
+.site-header-brand {
+  font-family: var(--font-hud);
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  text-shadow: 0 0 18px rgba(0, 240, 255, 0.35);
+  white-space: nowrap;
+}
+
+.site-header-brand span {
+  color: var(--cyan);
+}
+
+.site-header-links {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.site-header-links a {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--cyan-dim);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid rgba(0, 240, 255, 0.18);
+  background: rgba(0, 240, 255, 0.035);
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.site-header-links a:hover {
+  color: var(--cyan);
+  border-color: rgba(0, 240, 255, 0.55);
+  background: rgba(0, 240, 255, 0.08);
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.14);
+}
+
+@media (max-width: 640px) {
+  .site-header {
+    position: relative;
+    padding: 1rem 1rem 0;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .site-header-links {
+    justify-content: center;
+  }
+
+  .site-header-brand {
+    text-align: center;
+  }
+}
+
+/* ═══════════════════════════════════════════════
    HERO
 ═══════════════════════════════════════════════ */
 .hero {
@@ -516,6 +600,17 @@ button.full-width:disabled {
   letter-spacing: 0.2em;
   text-transform: uppercase;
   margin-top: 2rem;
+}
+
+.os-footer a {
+  color: var(--cyan);
+  text-decoration: none;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+.os-footer a:hover {
+  color: #fff;
+  text-shadow: 0 0 8px var(--cyan);
 }
 
 /* ═══════════════════════════════════════════════

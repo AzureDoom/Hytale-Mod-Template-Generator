@@ -92,6 +92,23 @@ export function App() {
       <div className="scanlines" aria-hidden="true" />
       <div className="ambient" aria-hidden="true" />
 
+      <header className="site-header">
+        <a className="site-header-brand" href="https://azuredoom.com" target="_blank" rel="noopener noreferrer">
+          <span>Azure</span>Doom
+        </a>
+
+        <nav className="site-header-links" aria-label="External links">
+          <a href="https://azuredoom.com" target="_blank" rel="noopener noreferrer">
+            Home
+          </a>
+          <a href="https://maven.azuredoom.com/#/" target="_blank" rel="noopener noreferrer">
+            Maven
+          </a>
+          <a href="https://github.com/AzureDoom/Hytale-Mod-Template-Generator" target="_blank" rel="noopener noreferrer">
+            Source
+          </a>
+        </nav>
+      </header>
       <div className="shell">
         {/* Hero */}
         <section className="hero">
@@ -143,7 +160,14 @@ export function App() {
           </div>
         </div>
 
-        <footer className="os-footer">© 2026 AzureDoom | <a href="#/status">System status</a></footer>
+        <footer className="os-footer">
+          © 2026 AzureDoom |
+          <a href="#/status">System status</a>
+          {' '}|{' '}
+          <a href="https://github.com/AzureDoom/Hytale-Mod-Template-Generator" target="_blank" rel="noopener noreferrer">
+            Source
+          </a>
+        </footer>
       </div>
     </>
   );
