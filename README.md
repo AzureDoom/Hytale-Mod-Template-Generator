@@ -1,6 +1,6 @@
 # Hytale Mod Template Generator
 
-A full-stack web application that scaffolds ready-to-build Hytale mod projects. Fill out a form, click **Generate**, and download a ZIP containing a fully configured Gradle project — complete with a manifest, main class, build file, Gradle wrapper, version catalog, and license — ready to open in IntelliJ IDEA or any other IDE.
+A full-stack web application that scaffolds ready-to-build Hytale mod projects. Fill out a form, click **Generate**, and download a ZIP containing a fully configured Gradle project, complete with a manifest, main class, build file, Gradle wrapper, version catalog, and license, ready to open in IntelliJ IDEA or any other IDE.
 
 ---
 
