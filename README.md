@@ -7,6 +7,7 @@ A full-stack web application that scaffolds ready-to-build Hytale mod projects. 
 ## Table of Contents
 
 - [Features](#features)
+- [Generated Project Tooling](#generated-project-tooling)
 - [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
 - [Local Development Setup](#local-development-setup)
@@ -27,6 +28,20 @@ A full-stack web application that scaffolds ready-to-build Hytale mod projects. 
 - **Manifest generation** — produces a `manifest.json` with correct dependency maps, CurseForge ID, pack inclusion flag, and disabled-by-default support.
 - **License file generation** — supports 15 open-source licenses plus a Proprietary option (MIT, Apache-2.0, GPL-3.0, AGPL-3.0, and more).
 - **ZIP download** — the entire scaffolded project is streamed directly to the browser as a ZIP archive with UNIX permissions set on `gradlew`.
+
+---
+
+## Generated Project Tooling
+
+Generated projects are built around my Hytale Gradle tooling.
+
+- **Hytale Tools Gradle Plugin**  
+  The generated Gradle project uses the [`com.azuredoom.hytale-tools`](https://plugins.gradle.org/plugin/com.azuredoom.hytale-tools) plugin to provide Hytale-focused build support and project conventions.  
+  Source: [`AzureDoom/Hytale-Gradle-Plugin`](https://github.com/AzureDoom/Hytale-Gradle-Plugin)
+
+- **Hytale Publisher Gradle Plugin**  
+  Publishing support is handled through the [`com.azuredoom.hytalepublisher`](https://plugins.gradle.org/plugin/com.azuredoom.hytalepublisher) plugin, which provides the publishing workflow for generated Hytale mod projects.  
+  Source: [`AzureDoom/HytalePublisher`](https://github.com/AzureDoom/HytalePublisher)
 
 ---
 
