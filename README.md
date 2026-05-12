@@ -2,12 +2,15 @@
 
 A full-stack web application that scaffolds ready-to-build Hytale mod projects. Fill out a form, click **Generate**, and download a ZIP containing a fully configured Gradle project, complete with a manifest, main class, build file, Gradle wrapper, version catalog, and license, ready to open in IntelliJ IDEA or any other IDE.
 
+The generator supports both standalone single-mod projects and multi-project workspaces. Multi-project workspaces generate a root Hytale workspace with a shared `common` module plus one or more mod subprojects.
+
 ---
 
 ## Table of Contents
 
 - [Features](#features)
 - [Generated Project Tooling](#generated-project-tooling)
+- [Generated Layouts](#generated-layouts)
 - [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
 - [Local Development Setup](#local-development-setup)
@@ -24,6 +27,8 @@ A full-stack web application that scaffolds ready-to-build Hytale mod projects. 
 
 - **Live version loading** — fetches available Hytale versions from the Hytale Maven repository (release and pre-release patchlines), with a built-in fallback list if the repository is unreachable.
 - **Flexible build configuration** — choose between Groovy DSL and Kotlin DSL, Java or Kotlin as the project language, and three version catalog modes (`none`, `basic`, `rich`).
+- **Standalone or multi-project generation** — generate either a traditional standalone mod project or a multi-project Hytale workspace with a shared `common` module and multiple mod subprojects.
+- **Per-module publishing configuration** — multi-project workspaces can generate separate HytalePublisher project IDs/slugs for each mod module, allowing every module to publish independently.
 - **Full Gradle wrapper bundling** — the server fetches and caches `gradle-wrapper.jar` from GitHub so the downloaded project works offline without requiring a Gradle installation.
 - **Manifest generation** — produces a `manifest.json` with correct dependency maps, CurseForge ID, pack inclusion flag, and disabled-by-default support.
 - **License file generation** — supports 15 open-source licenses plus a Proprietary option (MIT, Apache-2.0, GPL-3.0, AGPL-3.0, and more).
@@ -36,14 +41,78 @@ A full-stack web application that scaffolds ready-to-build Hytale mod projects. 
 Generated projects are built around my Hytale Gradle tooling.
 
 - **Hytale Tools Gradle Plugin**  
-  The generated Gradle project uses the [`com.azuredoom.hytale-tools`](https://plugins.gradle.org/plugin/com.azuredoom.hytale-tools) plugin to provide Hytale-focused build support and project conventions.  
+  Standalone projects and individual mod subprojects use the [`com.azuredoom.hytale-tools`](https://plugins.gradle.org/plugin/com.azuredoom.hytale-tools) plugin to provide Hytale-focused build support and project conventions.  
+  Source: [`AzureDoom/Hytale-Gradle-Plugin`](https://github.com/AzureDoom/Hytale-Gradle-Plugin)
+
+- **Hytale Workspace Gradle Plugin**  
+  Multi-project workspaces use the [`com.azuredoom.hytale-workspace`](https://plugins.gradle.org/plugin/com.azuredoom.hytale-workspace) plugin at the root project. The generated workspace includes a shared `common` module plus one or more mod modules, and configures workspace-level tasks such as running, staging, validating, and updating all mods together.  
   Source: [`AzureDoom/Hytale-Gradle-Plugin`](https://github.com/AzureDoom/Hytale-Gradle-Plugin)
 
 - **Hytale Publisher Gradle Plugin**  
-  Publishing support is handled through the [`com.azuredoom.hytalepublisher`](https://plugins.gradle.org/plugin/com.azuredoom.hytalepublisher) plugin, which provides the publishing workflow for generated Hytale mod projects.  
+  Publishing support is handled through the [`com.azuredoom.hytalepublisher`](https://plugins.gradle.org/plugin/com.azuredoom.hytalepublisher) plugin, which provides the publishing workflow for generated Hytale mod projects. In multi-project workspaces, publisher configuration can be generated per module so each mod subproject can publish to its own Modtale, CurseForge, or Modifold project.  
   Source: [`AzureDoom/HytalePublisher`](https://github.com/AzureDoom/HytalePublisher)
 
 ---
+
+---
+
+## Generated Layouts
+
+The generator supports two project layouts.
+
+### Standalone mod
+
+Standalone mode is the default. It generates one Gradle project containing one mod.
+
+```text
+my-mod/
+├── build.gradle
+├── settings.gradle
+├── gradle.properties
+├── src/main/java/...
+├── src/main/resources/manifest.json
+├── gradle/wrapper/
+├── gradlew
+└── gradlew.bat
+```
+
+When Kotlin DSL is selected, `build.gradle` and `settings.gradle` are generated as `build.gradle.kts` and `settings.gradle.kts`.
+
+### SMulti-project workspace
+
+Multi-project mode generates a root workspace project, a shared common module, and one or more mod subprojects.
+
+```text
+my-workspace/
+├── build.gradle
+├── settings.gradle
+├── gradle.properties
+├── common/
+│   └── build.gradle
+├── my_mod/
+│   ├── build.gradle
+│   ├── src/main/java/...
+│   └── src/main/resources/manifest.json
+├── economy/
+│   ├── build.gradle
+│   ├── src/main/java/...
+│   └── src/main/resources/manifest.json
+├── gradle/wrapper/
+├── gradlew
+└── gradlew.bat
+```
+
+The main Mod ID is used as the host mod project. Extra modules entered in Additional mod modules are added as additional mod subprojects.
+
+Each mod subproject:
+
+- applies `com.azuredoom.hytale-tools`
+- depends on `project(":common")`
+- receives its own generated `manifest.json`
+- receives its own generated main class
+- can receive its own publisher IDs when HytalePublisher is enabled
+
+The root project applies `com.azuredoom.hytale-workspace` and configures the workspace’s `modProjects` and `hostProject`.
 
 ## Architecture
 
@@ -191,7 +260,7 @@ Generates a scaffolded Hytale mod project and returns it as a ZIP file download.
 
 **Request body** — `application/json`
 
-See [Project Configuration Options](#project-configuration-options) for all fields.
+See [Project Configuration Options](#project-configuration-options) for all fields. The request can generate either a standalone mod project or a multi-project workspace depending on the `projectLayout` field.
 
 **Responses**
 
@@ -238,29 +307,70 @@ response is cached for 5 seconds to absorb auto-refresh traffic.
 
 These are the fields accepted by `POST /api/generate` and rendered in the form UI.
 
-| Field                          | Type                              | Required | Description                                                                                                                                                                                                                                                   |
-|--------------------------------|-----------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `patchline`                    | `"release"` \| `"pre-release"`    | ✓        | Hytale release channel.                                                                                                                                                                                                                                       |
-| `hytaleVersion`                | string                            | ✓        | Target Hytale server version (e.g. `2026.02.19-1a311a592`).                                                                                                                                                                                                   |
-| `group`                        | string                            | ✓        | Java/Kotlin package group (e.g. `com.example.mymod`).                                                                                                                                                                                                         |
-| `manifestGroup`                | string                            | ✓        | Manifest group identifier (e.g. `com.example`).                                                                                                                                                                                                               |
-| `modName`                      | string                            | ✓        | Human-readable mod name.                                                                                                                                                                                                                                      |
-| `modId`                        | string                            | ✓        | Mod identifier — used as the project folder name.                                                                                                                                                                                                             |
-| `mainClass`                    | string                            | ✓        | Simple or fully-qualified main class name.                                                                                                                                                                                                                    |
-| `modAuthor`                    | string                            | ✓        | Author name — used in the manifest and license file.                                                                                                                                                                                                          |
-| `modDescription`               | string                            | ✓        | Short description of the mod.                                                                                                                                                                                                                                 |
-| `modUrl`                       | string (URL)                      | ✓        | Project website URL.                                                                                                                                                                                                                                          |
-| `version`                      | string                            | ✓        | Initial mod version (e.g. `0.0.1`).                                                                                                                                                                                                                           |
-| `modLicense`                   | string                            | ✓        | License identifier. Supported values: `MIT`, `Apache-2.0`, `BSD-2-Clause`, `BSD-3-Clause`, `GPL-2.0-only`, `GPL-3.0-only`, `LGPL-2.1-only`, `LGPL-3.0-only`, `AGPL-3.0-only`, `MPL-2.0`, `EPL-2.0`, `ISC`, `CC0-1.0`, `Unlicense`, `EUPL-1.2`, `Proprietary`. |
-| `buildDsl`                     | `"groovy"` \| `"kotlin"`          |          | Build script DSL. Default: `groovy`.                                                                                                                                                                                                                          |
-| `projectLanguage`              | `"java"` \| `"kotlin"`            |          | Source language. Default: `java`.                                                                                                                                                                                                                             |
-| `javaVersion`                  | number                            |          | Java toolchain version. Default: `25`.                                                                                                                                                                                                                        |
-| `versionCatalogMode`           | `"none"` \| `"basic"` \| `"rich"` |          | Controls whether a `gradle/libs.versions.toml` is generated. Default: `none`.                                                                                                                                                                                 |
-| `manifestDependencies`         | string                            |          | Comma- or newline-separated `key=value` dependency map. Default: `Hytale:AssetModule=*`.                                                                                                                                                                      |
-| `manifestOptionalDependencies` | string                            |          | Same format as `manifestDependencies` but for optional deps. Default: empty.                                                                                                                                                                                  |
-| `curseforgeID`                 | string                            |          | CurseForge project ID for the update checker. Default: empty.                                                                                                                                                                                                 |
-| `disabledByDefault`            | boolean                           |          | Whether the mod is disabled by default. Default: `false`.                                                                                                                                                                                                     |
-| `includesPack`                 | boolean                           |          | Whether the mod bundles an asset pack. Default: `true`.                                                                                                                                                                                                       |
+| Field                          | Type                                | Required | Description                                                                                                                                                                                                                                                   |
+|--------------------------------|-------------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `projectLayout`                | `"standalone"` \| `"multi-project"` |          | Project layout to generate. `standalone` creates one mod project. `multi-project` creates a root workspace with `common` plus one or more mod subprojects. Default: `standalone`.                                                                             |
+| `additionalModIds`             | string                              |          | Newline- or comma-separated list of extra mod module names used only when `projectLayout` is `multi-project`. The primary `modId` is always included as the host mod project.                                                                                 |
+| `patchline`                    | `"release"` \| `"pre-release"`      | ✓        | Hytale release channel.                                                                                                                                                                                                                                       |
+| `hytaleVersion`                | string                              | ✓        | Target Hytale server version (e.g. `2026.02.19-1a311a592`).                                                                                                                                                                                                   |
+| `group`                        | string                              | ✓        | Java/Kotlin package group (e.g. `com.example.mymod`).                                                                                                                                                                                                         |
+| `manifestGroup`                | string                              | ✓        | Manifest group identifier (e.g. `com.example`).                                                                                                                                                                                                               |
+| `modName`                      | string                              | ✓        | Human-readable mod name.                                                                                                                                                                                                                                      |
+| `modId`                        | string                              | ✓        | Mod identifier — used as the project folder name.                                                                                                                                                                                                             |
+| `mainClass`                    | string                              | ✓        | Simple or fully-qualified main class name.                                                                                                                                                                                                                    |
+| `modAuthor`                    | string                              | ✓        | Author name — used in the manifest and license file.                                                                                                                                                                                                          |
+| `modDescription`               | string                              | ✓        | Short description of the mod.                                                                                                                                                                                                                                 |
+| `modUrl`                       | string (URL)                        | ✓        | Project website URL.                                                                                                                                                                                                                                          |
+| `version`                      | string                              | ✓        | Initial mod version (e.g. `0.0.1`).                                                                                                                                                                                                                           |
+| `modLicense`                   | string                              | ✓        | License identifier. Supported values: `MIT`, `Apache-2.0`, `BSD-2-Clause`, `BSD-3-Clause`, `GPL-2.0-only`, `GPL-3.0-only`, `LGPL-2.1-only`, `LGPL-3.0-only`, `AGPL-3.0-only`, `MPL-2.0`, `EPL-2.0`, `ISC`, `CC0-1.0`, `Unlicense`, `EUPL-1.2`, `Proprietary`. |
+| `buildDsl`                     | `"groovy"` \| `"kotlin"`            |          | Build script DSL. Default: `groovy`.                                                                                                                                                                                                                          |
+| `projectLanguage`              | `"java"` \| `"kotlin"`              |          | Source language. Default: `java`.                                                                                                                                                                                                                             |
+| `javaVersion`                  | number                              |          | Java toolchain version. Default: `25`.                                                                                                                                                                                                                        |
+| `versionCatalogMode`           | `"none"` \| `"basic"` \| `"rich"`   |          | Controls whether a `gradle/libs.versions.toml` is generated. Default: `none`.                                                                                                                                                                                 |
+| `manifestDependencies`         | string                              |          | Comma- or newline-separated `key=value` dependency map. Default: `Hytale:AssetModule=*`.                                                                                                                                                                      |
+| `manifestOptionalDependencies` | string                              |          | Same format as `manifestDependencies` but for optional deps. Default: empty.                                                                                                                                                                                  |
+| `curseforgeID`                 | string                              |          | CurseForge project ID for the update checker. Default: empty.                                                                                                                                                                                                 |
+| `disabledByDefault`            | boolean                             |          | Whether the mod is disabled by default. Default: `false`.                                                                                                                                                                                                     |
+| `includesPack`                 | boolean                             |          | Whether the mod bundles an asset pack. Default: `true`.                                                                                                                                                                                                       |
+| `usePublisher`                 | boolean                             |          | Whether to include the HytalePublisher Gradle plugin. Default: `false`.                                                                                                                                                                                       |
+| `publishModtale`               | boolean                             |          | Whether to enable Modtale publishing when `usePublisher` is enabled. Default: `true`.                                                                                                                                                                         |
+| `modtaleProjectId`             | string                              |          | Modtale project ID. In standalone projects this is written as `modtale_project_id`. In multi-project workspaces it is used as the default host module value.                                                                                                  |
+| `publishCurseforge`            | boolean                             |          | Whether to enable CurseForge publishing when `usePublisher` is enabled. Default: `true`.                                                                                                                                                                      |
+| `curseforgeProjectId`          | string                              |          | CurseForge publishing project ID. In multi-project workspaces each module receives its own `<module>_curseforge_project_id` property.                                                                                                                         |
+| `publishModifold`              | boolean                             |          | Whether to enable Modifold publishing when `usePublisher` is enabled. Default: `true`.                                                                                                                                                                        |
+| `modifoldProjectSlug`          | string                              |          | Modifold project slug. In multi-project workspaces each module receives its own `<module>_modifold_project_slug` property.                                                                                                                                    |
+
+### Multi-project publishing properties
+
+When HytalePublisher is enabled for a multi-project workspace, the generated `gradle.properties` uses module-specific publishing keys instead of one shared set of IDs.
+
+For example, a workspace with:
+
+```text
+modId = replace_me
+additionalModIds = economy, magic
+```
+
+can generate publishing properties like:
+
+```text
+# replace_me publishing
+replace_me_modtale_project_id = your-replace_me-modtale-project-id
+replace_me_curseforge_project_id = 123456
+replace_me_modifold_project_slug = replace_me
+
+# economy publishing
+economy_modtale_project_id = your-economy-modtale-project-id
+economy_curseforge_project_id = 123456
+economy_modifold_project_slug = economy
+
+# magic publishing
+magic_modtale_project_id = your-magic-modtale-project-id
+magic_curseforge_project_id = 123456
+magic_modifold_project_slug = magic
+```
+
+Each generated mod subproject reads its own keys, so modules can publish independently.
 
 ---
 
@@ -353,8 +463,8 @@ hytale-generator-webapp/
 │       ├── App.tsx                # Root component, version loading, form submit
 │       ├── types.ts               # Shared TypeScript types (mirrors server)
 │       ├── components/
-│       │   ├── ProjectForm.tsx    # Form UI
-│       │   └── PreviewPanel.tsx   # Live preview of generated file names
+│       │   ├── ProjectForm.tsx    # Form UI, including standalone/multi-project layout selection
+│       │   └── PreviewPanel.tsx   # Live preview of generated standalone or workspace file names
 │       └── lib/
 │           ├── api.ts             # fetch wrappers for all API endpoints
 │           └── defaults.ts        # Default form values
@@ -376,7 +486,7 @@ hytale-generator-webapp/
         │   ├── app-config.ts      # GET /api/app-config
         │   └── generate.ts        # POST /api/generate — ZIP assembly
         └── services/
-            ├── templates.ts       # Gradle file, manifest, main class generators
+            ├── templates.ts       # Gradle file, workspace file, manifest, main class generators
             ├── licenses.ts        # License text for all supported identifiers
             ├── string-utils.ts    # slugify, escapeJava, parseMainClass helpers
             ├── versions.ts        # Hytale Maven version fetcher with fallback
@@ -401,3 +511,9 @@ Run `npm install` from the workspace root, not from inside `server/`. The `tsx` 
 
 **Port conflicts**
 Change `PORT` in `server/.env` for the backend. For the frontend dev server, update the `server.port` field in `frontend/vite.config.ts` and the proxy target to match.
+
+**The multi-project option does not appear in the UI**  
+Make sure `frontend/src/components/ProjectForm.tsx` includes the `projectLayout` select field, then rebuild the frontend with `npm run build`, restart the server, reload nginx if applicable, and hard-refresh the browser cache.
+
+**Generated multi-project publishing uses placeholder IDs**  
+Each module gets its own publishing properties in `gradle.properties`. Replace the generated placeholder values such as `economy_curseforge_project_id = 123456` with the real project IDs before publishing.

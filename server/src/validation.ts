@@ -19,7 +19,32 @@ const licenseEnum = z.enum([
   'Proprietary'
 ]);
 
+const moduleNameSchema = z
+  .string()
+  .regex(/^[a-z][a-z0-9_-]*$/, 'Module names must start with a lowercase letter and only contain lowercase letters, numbers, underscores, or hyphens.');
+
 export const projectInputSchema = z.object({
+  projectLayout: z.enum(['standalone', 'multi-project']).default('standalone'),
+  additionalModIds: z
+  .string()
+  .default('')
+  .superRefine((value, ctx) => {
+    const moduleNames = value
+      .split(/[\n,]+/)
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+
+    for (const moduleName of moduleNames) {
+      const result = moduleNameSchema.safeParse(moduleName);
+      if (!result.success) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'Additional module names must start with a lowercase letter and only contain lowercase letters, numbers, underscores, or hyphens.'
+        });
+      }
+    }
+  }),
   patchline: z.enum(['release', 'pre-release']),
   hytaleVersion: z.string().min(1, 'Hytale version is required.'),
   modLicense: licenseEnum.default('MIT'),

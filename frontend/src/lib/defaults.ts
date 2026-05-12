@@ -1,6 +1,8 @@
 import type { ProjectFormData } from '../types';
 
 export const defaultFormData: ProjectFormData = {
+  projectLayout: 'standalone',
+  additionalModIds: '',
   patchline: 'release',
   hytaleVersion: '',
   modLicense: 'MIT',

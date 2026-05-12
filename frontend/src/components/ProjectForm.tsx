@@ -31,6 +31,8 @@ const LICENSE_OPTIONS = [
 const TOOLTIPS = {
   patchline: 'Release: stable Hytale server builds.\nPre-Release: newer builds that may be unstable.',
   hytaleVersion: 'The Hytale server version your mod targets. Versions are loaded live from the Hytale Maven repository.',
+  projectLayout: 'Standalone mod: generate one Gradle project.\nMulti-project workspace: generate a root workspace with common plus one or more mod subprojects.',
+  additionalModIds: 'Only used for multi-project workspaces. Enter one extra mod module per line, such as economy, magic, or worldgen.',
   buildDsl: 'Groovy DSL uses build.gradle. Kotlin DSL uses build.gradle.kts and provides better IDE support.',
   projectLanguage: 'The JVM language your mod source code will be written in.',
   versionCatalog: 'None: keep everything inline in the Gradle files.\nBasic TOML: create gradle/libs.versions.toml for plugin versions.\nRich TOML: also add the Hytale server library entry to the catalog.',
@@ -102,6 +104,13 @@ export function ProjectForm({ value, versions, onChange, onSubmit, loading }: Pr
           </select>
         </label>
         <label>
+          <span>Project layout <Tooltip text={TOOLTIPS.projectLayout} /></span>
+          <select name="projectLayout" value={value.projectLayout} onChange={handleInput}>
+            <option value="standalone">Standalone mod</option>
+            <option value="multi-project">Multi-project workspace</option>
+          </select>
+        </label>
+        <label>
           <span>Source language <Tooltip text={TOOLTIPS.projectLanguage} /></span>
           <select name="projectLanguage" value={value.projectLanguage} onChange={handleInput}>
             <option value="java">Java</option>
@@ -116,6 +125,17 @@ export function ProjectForm({ value, versions, onChange, onSubmit, loading }: Pr
             <option value="rich">Rich TOML</option>
           </select>
         </label>
+        {value.projectLayout === 'multi-project' && (
+          <label className="full">
+            <span>Additional mod modules <Tooltip text={TOOLTIPS.additionalModIds} /></span>
+            <textarea
+              name="additionalModIds"
+              value={value.additionalModIds}
+              onChange={handleInput}
+              placeholder={'economy\nforestry\nmagic'}
+            />
+          </label>
+        )}
       </div>
 
       <SectionHeading>Project identity</SectionHeading>

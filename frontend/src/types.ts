@@ -1,3 +1,4 @@
+export type ProjectLayout = 'standalone' | 'multi-project';
 export type Patchline = 'release' | 'pre-release';
 export type BuildDsl = 'groovy' | 'kotlin';
 export type ProjectLanguage = 'java' | 'kotlin';
@@ -21,6 +22,8 @@ export type LicenseOption =
   | 'Proprietary';
 
 export interface ProjectFormData {
+  projectLayout: ProjectLayout;
+  additionalModIds: string;
   patchline: Patchline;
   hytaleVersion: string;
   modLicense: LicenseOption;
