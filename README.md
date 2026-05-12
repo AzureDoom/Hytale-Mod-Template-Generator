@@ -78,7 +78,7 @@ my-mod/
 
 When Kotlin DSL is selected, `build.gradle` and `settings.gradle` are generated as `build.gradle.kts` and `settings.gradle.kts`.
 
-### SMulti-project workspace
+### Multi-project workspace
 
 Multi-project mode generates a root workspace project, a shared common module, and one or more mod subprojects.
 
