@@ -54,6 +54,48 @@ const TOOLTIPS = {
   publishModifold: 'Publish to Modifold. Your project slug is the last segment of your Modifold project URL (e.g. modifold.com/mod/your-slug).',
 };
 
+type FieldErrors = Partial<Record<keyof ProjectFormData, string>>;
+
+function isBlank(value: string) {
+  return value.trim().length === 0;
+}
+
+function isValidOptionalUrl(value: string) {
+  if (isBlank(value)) return true;
+
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function validateProjectForm(value: ProjectFormData): FieldErrors {
+  const errors: FieldErrors = {};
+
+  if (isBlank(value.hytaleVersion)) errors.hytaleVersion = 'Hytale version is required.';
+  if (isBlank(value.group)) errors.group = 'Group is required.';
+  if (isBlank(value.manifestGroup)) errors.manifestGroup = 'Manifest group is required.';
+  if (isBlank(value.modName)) errors.modName = 'Mod name is required.';
+  if (isBlank(value.modId)) errors.modId = 'Mod ID is required.';
+  if (isBlank(value.mainClass)) errors.mainClass = 'Main class is required.';
+  if (isBlank(value.modAuthor)) errors.modAuthor = 'Author is required.';
+  if (isBlank(value.version)) errors.version = 'Version is required.';
+  if (isBlank(value.modDescription)) errors.modDescription = 'Description is required.';
+
+  if (!isValidOptionalUrl(value.modUrl)) {
+    errors.modUrl = 'Enter a full URL such as https://example.com, or leave this blank.';
+  }
+
+  return errors;
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <span className="field-error">{message}</span>;
+}
+
 function Tooltip({ text }: { text: string }) {
   return <span className="hint" aria-label={text} data-tooltip={text}>?</span>;
 }
@@ -77,6 +119,9 @@ export function ProjectForm({ value, versions, onChange, onSubmit, loading }: Pr
     update(name as keyof ProjectFormData, target.value as never);
   }
 
+  const errors = validateProjectForm(value);
+  const hasErrors = Object.keys(errors).length > 0;
+
   return (
     <>
       <SectionHeading>Build configuration</SectionHeading>
@@ -90,11 +135,17 @@ export function ProjectForm({ value, versions, onChange, onSubmit, loading }: Pr
         </label>
         <label>
           <span>Hytale version <Tooltip text={TOOLTIPS.hytaleVersion} /></span>
-          <select name="hytaleVersion" value={value.hytaleVersion} onChange={handleInput}>
+          <select
+            name="hytaleVersion"
+            value={value.hytaleVersion}
+            onChange={handleInput}
+            aria-invalid={Boolean(errors.hytaleVersion)}
+          >
             {versions.map((version) => (
               <option key={version} value={version}>{version}</option>
             ))}
           </select>
+          <FieldError message={errors.hytaleVersion} />
         </label>
         <label>
           <span>Build DSL <Tooltip text={TOOLTIPS.buildDsl} /></span>
@@ -137,40 +188,91 @@ export function ProjectForm({ value, versions, onChange, onSubmit, loading }: Pr
           </label>
         )}
       </div>
-
       <SectionHeading>Project identity</SectionHeading>
       <div className="grid">
         <label>
           <span>Group <Tooltip text={TOOLTIPS.group} /></span>
-          <input name="group" value={value.group} onChange={handleInput} />
+          <input
+            name="group"
+            value={value.group}
+            onChange={handleInput}
+            aria-invalid={Boolean(errors.group)}
+          />
+          <FieldError message={errors.group} />
         </label>
         <label>
           <span>Manifest group <Tooltip text={TOOLTIPS.manifestGroup} /></span>
-          <input name="manifestGroup" value={value.manifestGroup} onChange={handleInput} />
+          <input
+            name="manifestGroup"
+            value={value.manifestGroup}
+            onChange={handleInput}
+            aria-invalid={Boolean(errors.manifestGroup)}
+          />
+          <FieldError message={errors.manifestGroup} />
         </label>
         <label>
           <span>Mod name <Tooltip text={TOOLTIPS.modName} /></span>
-          <input name="modName" value={value.modName} onChange={handleInput} />
+          <input
+            name="modName"
+            value={value.modName}
+            onChange={handleInput}
+            aria-invalid={Boolean(errors.modName)}
+          />
+          <FieldError message={errors.modName} />
         </label>
         <label>
           <span>Mod ID <Tooltip text={TOOLTIPS.modId} /></span>
-          <input name="modId" value={value.modId} onChange={handleInput} />
+          <input
+            name="modId"
+            value={value.modId}
+            onChange={handleInput}
+            aria-invalid={Boolean(errors.modId)}
+          />
+          <FieldError message={errors.modId} />
         </label>
         <label>
           <span>Main class <Tooltip text={TOOLTIPS.mainClass} /></span>
-          <input name="mainClass" value={value.mainClass} onChange={handleInput} />
+          <input
+            name="mainClass"
+            value={value.mainClass}
+            onChange={handleInput}
+            aria-invalid={Boolean(errors.mainClass)}
+          />
+          <FieldError message={errors.mainClass} />
         </label>
         <label>
           <span>Author <Tooltip text={TOOLTIPS.modAuthor} /></span>
-          <input name="modAuthor" value={value.modAuthor} onChange={handleInput} />
+          <input
+            name="modAuthor"
+            value={value.modAuthor}
+            onChange={handleInput}
+            aria-invalid={Boolean(errors.modAuthor)}
+          />
+          <FieldError message={errors.modAuthor} />
         </label>
         <label>
           <span>Version <Tooltip text={TOOLTIPS.version} /></span>
-          <input name="version" value={value.version} onChange={handleInput} />
+          <input
+            name="version"
+            value={value.version}
+            onChange={handleInput}
+            aria-invalid={Boolean(errors.version)}
+          />
+          <FieldError message={errors.version} />
         </label>
         <label>
           <span>Mod URL <Tooltip text={TOOLTIPS.modUrl} /></span>
-          <input name="modUrl" value={value.modUrl} onChange={handleInput} />
+          <input
+            name="modUrl"
+            value={value.modUrl}
+            onChange={handleInput}
+            aria-invalid={Boolean(errors.modUrl)}
+            aria-describedby={errors.modUrl ? 'modUrl-error' : undefined}
+            placeholder="https://example.com"
+          />
+          <span id="modUrl-error">
+            <FieldError message={errors.modUrl} />
+          </span>
         </label>
       </div>
 
@@ -186,7 +288,13 @@ export function ProjectForm({ value, versions, onChange, onSubmit, loading }: Pr
         </label>
         <label className="full">
           <span>Description <Tooltip text={TOOLTIPS.modDescription} /></span>
-          <textarea name="modDescription" value={value.modDescription} onChange={handleInput} />
+          <textarea
+            name="modDescription"
+            value={value.modDescription}
+            onChange={handleInput}
+            aria-invalid={Boolean(errors.modDescription)}
+          />
+          <FieldError message={errors.modDescription} />
         </label>
         <label className="checkbox">
           <input name="includesPack" type="checkbox" checked={value.includesPack} onChange={handleInput} />
@@ -267,8 +375,13 @@ export function ProjectForm({ value, versions, onChange, onSubmit, loading }: Pr
         )}
       </div>
 
-      <button className="full-width" onClick={onSubmit} disabled={loading}>
-        {loading ? '// GENERATING…' : 'GENERATE ZIP'}
+      <button
+        className="full-width"
+        onClick={onSubmit}
+        disabled={loading || hasErrors}
+        title={hasErrors ? 'Fix the highlighted fields before generating.' : undefined}
+      >
+        {loading ? 'Generating…' : 'Generate Zip'}
       </button>
     </>
   );

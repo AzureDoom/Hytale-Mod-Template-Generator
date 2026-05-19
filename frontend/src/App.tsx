@@ -157,6 +157,7 @@ export function App() {
   const [formData, setFormData] = useState<ProjectFormData>(defaultFormData);
   const [versions, setVersions] = useState<string[]>([FALLBACK_VERSION]);
   const [status, setStatus] = useState('Loading versions…');
+  const [error, setError] = useState('');
   const [showStatusBanner, setShowStatusBanner] = useState(false);
   const [loading, setLoading] = useState(false);
   const hash = useHashRoute();
@@ -204,6 +205,7 @@ export function App() {
   async function handleSubmit() {
     setLoading(true);
     setStatus('Generating ZIP…');
+    setError('');
 
     try {
       const payload = {
@@ -222,7 +224,9 @@ export function App() {
       window.URL.revokeObjectURL(url);
       setStatus('ZIP downloaded successfully.');
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Unknown error');
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setError(message);
+      setStatus(message);
     } finally {
       setLoading(false);
     }
@@ -276,6 +280,12 @@ export function App() {
 
         {showStatusBanner && (
           <div className="status-banner">// SYS :: {status}</div>
+        )}
+
+        {error && (
+          <div className="error-banner" role="alert">
+            {error}
+          </div>
         )}
 
         {/* Main panels */}

@@ -648,3 +648,25 @@ button.full-width:disabled {
   .shell { padding: 0 1rem 3rem; }
   .os-panel { padding: 1.25rem; }
 }
+
+.field-error {
+  display: block;
+  margin-top: 0.35rem;
+  color: #ff6b6b;
+  font-size: 0.85rem;
+}
+
+input[aria-invalid='true'],
+textarea[aria-invalid='true'],
+select[aria-invalid='true'] {
+  border-color: #ff6b6b;
+}
+
+.error-banner {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ff6b6b;
+  border-radius: 0.5rem;
+  color: #ffb3b3;
+  background: rgba(255, 107, 107, 0.1);
+}

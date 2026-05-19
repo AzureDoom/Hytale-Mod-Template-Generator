@@ -55,7 +55,13 @@ export const projectInputSchema = z.object({
   modAuthor: z.string().min(1, 'Author is required.'),
   modId: z.string().min(1, 'Mod ID is required.'),
   modDescription: z.string().min(1, 'Description is required.'),
-  modUrl: z.string().url('Mod URL must be a valid URL.'),
+  modUrl: z
+  .string()
+  .trim()
+  .refine((value) => value === '' || z.string().url().safeParse(value).success, {
+    message: 'Mod URL must be a valid URL.',
+  })
+  .default(''),
   version: z.string().min(1, 'Version is required.'),
   versionCatalogMode: z.enum(['none', 'basic', 'rich']).default('none'),
   buildDsl: z.enum(['groovy', 'kotlin']).default('groovy'),
