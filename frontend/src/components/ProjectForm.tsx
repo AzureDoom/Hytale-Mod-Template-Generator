@@ -24,6 +24,7 @@ const LICENSE_OPTIONS = [
   { value: 'ISC', label: 'ISC' },
   { value: 'CC0-1.0', label: 'CC0 1.0' },
   { value: 'Unlicense', label: 'Unlicense' },
+  { value: 'WTFPL', label: 'WTFPL' },
   { value: 'EUPL-1.2', label: 'EUPL 1.2' },
   { value: 'Proprietary', label: 'All Rights Reserved / Proprietary' }
 ] as const;

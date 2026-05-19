@@ -149,6 +149,17 @@ Copyright (c) {{year}} {{author}}
 Licensed under the EUPL, Version 1.2 or subsequent versions as soon as they
 are approved by the European Commission.
 See https://eupl.eu/ for the full text.`,
+WTFPL: `DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+Version 2, December 2004
+
+Copyright (C) {{year}} {{author}}
+
+Everyone is permitted to copy and distribute verbatim or modified copies of this license document, and changing it is allowed as long as the name is changed.
+
+DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+
+0. You just DO WHAT THE FUCK YOU WANT TO.`,
   Proprietary: `All Rights Reserved
 
 Copyright (c) {{year}} {{author}}

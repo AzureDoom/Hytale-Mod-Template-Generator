@@ -18,6 +18,7 @@ export type LicenseOption =
   | 'ISC'
   | 'CC0-1.0'
   | 'Unlicense'
+  | 'WTFPL'
   | 'EUPL-1.2'
   | 'Proprietary';
 
