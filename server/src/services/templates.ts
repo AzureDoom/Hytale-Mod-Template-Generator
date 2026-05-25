@@ -22,8 +22,8 @@ function hytaleToolsPluginLine(data: ProjectInput) {
   }
 
   return data.buildDsl === 'kotlin'
-      ? '    id("com.azuredoom.hytale-tools") version "1.0.+"\n'
-      : "    id 'com.azuredoom.hytale-tools' version '1.0.+'\n";
+      ? '    id("com.azuredoom.hytale-tools") version "1.+"\n'
+      : "    id 'com.azuredoom.hytale-tools' version '1.+'\n";
 }
 
 function kotlinPluginLine(data: ProjectInput) {
@@ -40,9 +40,14 @@ function kotlinPluginLine(data: ProjectInput) {
 
 function hytalePublisherPluginLine(data: ProjectInput) {
   if (!data.usePublisher) return '';
+
+  if (hasVersionCatalog(data)) {
+    return '    alias(libs.plugins.hytalePublisher)\n';
+  }
+
   return data.buildDsl === 'kotlin'
-      ? '    id("com.azuredoom.hytalepublisher") version "1.1.1"\n'
-      : "    id 'com.azuredoom.hytalepublisher' version '1.1.1'\n";
+    ? '    id("com.azuredoom.hytalepublisher") version "1.+"\n'
+    : "    id 'com.azuredoom.hytalepublisher' version '1.+'\n";
 }
 
 function propertyKeyForModule(moduleName: string, suffix: string) {
@@ -497,7 +502,7 @@ export function buildWorkspaceRootBuildFile(data: ProjectInput) {
     return {
       path: 'build.gradle.kts',
       contents: `plugins {
-    id("com.azuredoom.hytale-workspace") version "1.0.+"
+    id("com.azuredoom.hytale-workspace") version "1.+"
 }
 
 subprojects {
@@ -521,7 +526,7 @@ hytaleWorkspace {
   return {
     path: 'build.gradle',
     contents: `plugins {
-    id 'com.azuredoom.hytale-workspace' version '1.0.+'
+    id 'com.azuredoom.hytale-workspace' version '1.+'
 }
 
 subprojects {
