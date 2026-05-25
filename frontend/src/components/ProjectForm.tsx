@@ -55,6 +55,8 @@ const TOOLTIPS = {
   publishModifold: 'Publish to Modifold. Your project slug is the last segment of your Modifold project URL (e.g. modifold.com/mod/your-slug).',
 };
 
+const HYTALE_PUBLISHER_URL = 'https://github.com/AzureDoom/HytalePublisher';
+
 type FieldErrors = Partial<Record<keyof ProjectFormData, string>>;
 
 function isBlank(value: string) {
@@ -311,7 +313,18 @@ export function ProjectForm({ value, versions, onChange, onSubmit, loading }: Pr
       <div className="grid">
         <label className="checkbox full">
           <input name="usePublisher" type="checkbox" checked={value.usePublisher} onChange={handleInput} />
-          <span>Include HytalePublisher plugin <Tooltip text={TOOLTIPS.usePublisher} /></span>
+          <span>
+            Include{' '}
+            <a
+              href={HYTALE_PUBLISHER_URL}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(event) => event.stopPropagation()}
+            >
+              HytalePublisher
+            </a>{' '}
+            plugin <Tooltip text={TOOLTIPS.usePublisher} />
+          </span>
         </label>
 
         {value.usePublisher && (
