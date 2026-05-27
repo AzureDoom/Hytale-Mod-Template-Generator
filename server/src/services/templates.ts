@@ -371,27 +371,7 @@ public class ${parsedMain.className} extends JavaPlugin {
 export function buildSettingsFile(data: ProjectInput) {
   const projectName = data.modName.replace(/'/g, "\\'");
   const catalogBlock = hasVersionCatalog(data)
-      ? data.buildDsl === 'kotlin'
-          ? `
-
-dependencyResolutionManagement {
-    versionCatalogs {
-        create("libs") {
-            from(files("gradle/libs.versions.toml"))
-        }
-    }
-}
-`
-          : `
-
-dependencyResolutionManagement {
-    versionCatalogs {
-        libs {
-            from(files('gradle/libs.versions.toml'))
-        }
-    }
-}
-`
+      ? '\n// Gradle automatically imports gradle/libs.versions.toml as the libs catalog.\n'
       : '\n';
 
   if (data.buildDsl === 'kotlin') {
@@ -447,25 +427,7 @@ export function buildWorkspaceSettingsFile(data: ProjectInput) {
       : modules.map((name) => `'${name}'`).join(', ');
 
   const catalogBlock = hasVersionCatalog(data)
-    ? data.buildDsl === 'kotlin'
-      ? `
-dependencyResolutionManagement {
-    versionCatalogs {
-        create("libs") {
-            from(files("gradle/libs.versions.toml"))
-        }
-    }
-}
-`
-      : `
-dependencyResolutionManagement {
-    versionCatalogs {
-        libs {
-            from(files('gradle/libs.versions.toml'))
-        }
-    }
-}
-`
+    ? '// Gradle automatically imports gradle/libs.versions.toml as the libs catalog.\n'
     : '\n';
 
   if (data.buildDsl === 'kotlin') {
@@ -827,16 +789,20 @@ ${hytalePublisherBlock(data)}`
 
 export function buildVersionCatalog(data: ProjectInput) {
   const header = `# Generated for ${data.modName}\n# version_catalog_mode=${data.versionCatalogMode}\n\n`;
-  const base = `${header}[versions]
+  const versions = `[versions]
 hytale = "${data.hytaleVersion}"
-hytaleTools = "1.0.+"
-foojayResolver = "1.0.0"
+hytaleTools = "1.+"
+${data.usePublisher ? 'hytalePublisher = "1.+"\n' : ''}foojayResolver = "1.0.0"
 kotlin = "${KOTLIN_VERSION}"
+`;
 
+  const plugins = `
 [plugins]
 hytaleTools = { id = "com.azuredoom.hytale-tools", version.ref = "hytaleTools" }
-kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+${data.usePublisher ? 'hytalePublisher = { id = "com.azuredoom.hytalepublisher", version.ref = "hytalePublisher" }\n' : ''}kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 `;
+
+  const base = `${header}${versions}${plugins}`;
 
   if (data.versionCatalogMode === 'basic') {
     return `${base}
