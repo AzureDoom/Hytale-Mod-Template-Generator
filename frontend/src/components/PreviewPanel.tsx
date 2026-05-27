@@ -24,6 +24,23 @@ function getPreviewModProjects(value: ProjectFormData) {
   return Array.from(new Set([primary, ...extras]));
 }
 
+function futureHytaleVersion(version: string) {
+  const match = version.trim().match(/^v?(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
+
+  if (!match) return '';
+
+  const major = Number(match[1]);
+  const minor = Number(match[2]);
+
+  return `${major}.${minor + 1}.0`;
+}
+
+function manifestServerVersion(version: string) {
+  const nextVersion = futureHytaleVersion(version);
+
+  return nextVersion ? `>=${version} <${nextVersion}` : version;
+}
+
 function toPascalCase(value: string) {
   return value
     .split(/[-_]+/)
@@ -94,7 +111,9 @@ manifest_group=${value.manifestGroup}
 mod_name=${value.modName}
 mod_id=${value.modId}
 project_layout=${value.projectLayout}
-${isMultiProject ? `mod_projects=${modProjects.join(',')}\n` : ''}hytale_version=${value.hytaleVersion}
+${isMultiProject ? `mod_projects=${modProjects.join(',')}\n` : ''}
+hytale_version=${value.hytaleVersion}
+manifestServerVersion = ${manifestServerVersion(value.hytaleVersion)}
 java_version=25
 includes_pack=${value.includesPack}
 disabled_by_default=${value.disabledByDefault}`}</pre>

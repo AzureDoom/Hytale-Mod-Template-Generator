@@ -213,6 +213,27 @@ function buildPublisherProperties(data: ProjectInput) {
   return `${lines.join('\n')}\n`;
 }
 
+function futureHytaleVersion(version: string) {
+  const match = version.trim().match(/^v?(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
+
+  if (!match) {
+    return '';
+  }
+
+  const major = Number(match[1]);
+  const minor = Number(match[2]);
+
+  return `${major}.${minor + 1}.0`;
+}
+
+function manifestServerVersion(data: ProjectInput) {
+  const nextVersion = futureHytaleVersion(data.hytaleVersion);
+
+  return nextVersion
+    ? `>=${data.hytaleVersion} <${nextVersion}`
+    : data.hytaleVersion;
+}
+
 export function buildGradleProperties(data: ProjectInput) {
   const parsedMain = parseMainClass(data.mainClass, data.group);
   return `# Gradle
@@ -239,7 +260,7 @@ version = ${data.version}
 includes_pack = ${data.includesPack}
 disabled_by_default = ${data.disabledByDefault}
 patchline = ${data.patchline}
-server_version = ${data.hytaleVersion}
+manifestServerVersion = ${manifestServerVersion(data)}
 manifest_dependencies = ${data.manifestDependencies}
 manifest_opt_dependencies = ${data.manifestOptionalDependencies}
 curseforgeID = ${data.curseforgeID}
@@ -259,7 +280,7 @@ export function buildManifestFile(data: ProjectInput) {
       }
     ],
     Website: data.modUrl,
-    ServerVersion: data.hytaleVersion,
+    ServerVersion: manifestServerVersion(data),
     Dependencies: parseDependencyMap(data.manifestDependencies),
     OptionalDependencies: parseDependencyMap(data.manifestOptionalDependencies),
     DisabledByDefault: data.disabledByDefault,
@@ -609,6 +630,7 @@ dependencies {
 hytaleTools {
     javaVersion = property("java_version").toString().toInt()
     hytaleVersion = property("hytale_version").toString()
+    manifestServerVersion = property("manifestServerVersion").toString()
     manifestGroup = property("manifest_group").toString()
     modId = "${modId}"
     modDescription = property("mod_description").toString()
@@ -652,6 +674,7 @@ dependencies {
 hytaleTools {
     javaVersion = project.java_version as Integer
     hytaleVersion = project.hytale_version.toString()
+    manifestServerVersion = project.manifestServerVersion.toString()
     manifestGroup = project.manifest_group.toString()
     modId = '${modId}'
     modDescription = project.mod_description.toString()
@@ -712,6 +735,7 @@ java {
 hytaleTools {
     javaVersion = property("java_version").toString().toInt()
     hytaleVersion = property("hytale_version").toString()
+    manifestServerVersion = property("manifestServerVersion").toString()
     manifestGroup = property("manifest_group").toString()
     modId = property("mod_id").toString()
     modDescription = property("mod_description").toString()
@@ -772,6 +796,7 @@ java {
 hytaleTools {
     javaVersion = project.java_version as Integer
     hytaleVersion = project.hytale_version.toString()
+    manifestServerVersion = project.manifestServerVersion.toString()
     manifestGroup = project.manifest_group.toString()
     modId = project.mod_id.toString()
     modDescription = project.mod_description.toString()
