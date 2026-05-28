@@ -308,6 +308,9 @@ patchline = ${data.patchline}
 # Server version mirrored for tooling compatibility.
 server_version = ${data.hytaleVersion}
 
+# Server version range written into manifest.json.
+manifestServerVersion = ${manifestServerVersion(data)}
+
 # Required manifest dependencies. Format: Group:Name=Version,Other:Mod=*
 manifest_dependencies = ${data.manifestDependencies}
 
