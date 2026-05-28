@@ -14,10 +14,60 @@ const licenseEnum = z.enum([
     'ISC',
     'CC0-1.0',
     'Unlicense',
+    'WTFPL',
     'EUPL-1.2',
     'Proprietary'
 ]);
+const moduleNameSchema = z
+    .string()
+    .regex(/^[a-z][a-z0-9_-]*$/, 'Module names must start with a lowercase letter and only contain lowercase letters, numbers, underscores, or hyphens.');
+const authorNamesSchema = z
+    .string()
+    .min(1, 'Author is required.')
+    .superRefine((value, ctx) => {
+    const authors = value.split(',').map((author) => author.trim());
+    if (authors.length === 0 || authors.some((author) => author.length === 0)) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Author names must be comma-separated and cannot be empty.',
+        });
+        return;
+    }
+    for (const author of authors) {
+        if (/\s/.test(author)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Author names cannot contain spaces. Use commas to add multiple authors.',
+            });
+            return;
+        }
+    }
+})
+    .transform((value) => value
+    .split(',')
+    .map((author) => author.trim())
+    .filter(Boolean)
+    .join(','));
 export const projectInputSchema = z.object({
+    projectLayout: z.enum(['standalone', 'multi-project']).default('standalone'),
+    additionalModIds: z
+        .string()
+        .default('')
+        .superRefine((value, ctx) => {
+        const moduleNames = value
+            .split(/[\n,]+/)
+            .map((entry) => entry.trim())
+            .filter(Boolean);
+        for (const moduleName of moduleNames) {
+            const result = moduleNameSchema.safeParse(moduleName);
+            if (!result.success) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: 'Additional module names must start with a lowercase letter and only contain lowercase letters, numbers, underscores, or hyphens.'
+                });
+            }
+        }
+    }),
     patchline: z.enum(['release', 'pre-release']),
     hytaleVersion: z.string().min(1, 'Hytale version is required.'),
     modLicense: licenseEnum.default('MIT'),
@@ -25,10 +75,16 @@ export const projectInputSchema = z.object({
     manifestGroup: z.string().min(1, 'Manifest group is required.'),
     modName: z.string().min(1, 'Mod name is required.'),
     mainClass: z.string().min(1, 'Main class is required.'),
-    modAuthor: z.string().min(1, 'Author is required.'),
+    modAuthor: authorNamesSchema,
     modId: z.string().min(1, 'Mod ID is required.'),
     modDescription: z.string().min(1, 'Description is required.'),
-    modUrl: z.string().url('Mod URL must be a valid URL.'),
+    modUrl: z
+        .string()
+        .trim()
+        .refine((value) => value === '' || z.string().url().safeParse(value).success, {
+        message: 'Mod URL must be a valid URL.',
+    })
+        .default(''),
     version: z.string().min(1, 'Version is required.'),
     versionCatalogMode: z.enum(['none', 'basic', 'rich']).default('none'),
     buildDsl: z.enum(['groovy', 'kotlin']).default('groovy'),
@@ -38,5 +94,12 @@ export const projectInputSchema = z.object({
     manifestOptionalDependencies: z.string().default(''),
     curseforgeID: z.string().default(''),
     disabledByDefault: z.boolean().default(false),
-    includesPack: z.boolean().default(true)
+    includesPack: z.boolean().default(true),
+    usePublisher: z.boolean().default(false),
+    publishModtale: z.boolean().default(true),
+    modtaleProjectId: z.string().default(''),
+    publishCurseforge: z.boolean().default(true),
+    curseforgeProjectId: z.string().default(''),
+    publishModifold: z.boolean().default(true),
+    modifoldProjectSlug: z.string().default(''),
 });

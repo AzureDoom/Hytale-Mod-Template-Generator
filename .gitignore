@@ -2,3 +2,6 @@ server/cache/*
 !server/cache/.gitkeep
 node_modules
 .idea
+
+frontend/dist
+server/dist

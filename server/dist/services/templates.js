@@ -15,8 +15,8 @@ function hytaleToolsPluginLine(data) {
         return '    alias(libs.plugins.hytaleTools)\n';
     }
     return data.buildDsl === 'kotlin'
-        ? '    id("com.azuredoom.hytale-tools") version "1.0.+"\n'
-        : "    id 'com.azuredoom.hytale-tools' version '1.0.+'\n";
+        ? '    id("com.azuredoom.hytale-tools") version "1.+"\n'
+        : "    id 'com.azuredoom.hytale-tools' version '1.+'\n";
 }
 function kotlinPluginLine(data) {
     if (data.projectLanguage !== 'kotlin')
@@ -27,6 +27,79 @@ function kotlinPluginLine(data) {
     return data.buildDsl === 'kotlin'
         ? `    kotlin("jvm") version "${KOTLIN_VERSION}"\n`
         : `    id 'org.jetbrains.kotlin.jvm' version '${KOTLIN_VERSION}'\n`;
+}
+function hytalePublisherPluginLine(data) {
+    if (!data.usePublisher)
+        return '';
+    if (hasVersionCatalog(data)) {
+        return '    alias(libs.plugins.hytalePublisher)\n';
+    }
+    return data.buildDsl === 'kotlin'
+        ? '    id("com.azuredoom.hytalepublisher") version "1.+"\n'
+        : "    id 'com.azuredoom.hytalepublisher' version '1.+'\n";
+}
+function propertyKeyForModule(moduleName, suffix) {
+    return `${moduleName.replace(/[^a-zA-Z0-9_]/g, '_')}_${suffix}`;
+}
+function hytalePublisherBlock(data, moduleName) {
+    if (!data.usePublisher)
+        return '';
+    const platforms = [];
+    const modulePrefix = moduleName ? propertyKeyForModule(moduleName, '') : '';
+    const propertyName = (suffix) => moduleName ? propertyKeyForModule(moduleName, suffix) : suffix;
+    if (data.publishModtale) {
+        const key = propertyName('modtale_project_id');
+        if (data.buildDsl === 'kotlin') {
+            platforms.push(`    modtale {
+        enabled = true
+        projectId = property("${key}").toString()
+    }`);
+        }
+        else {
+            platforms.push(`    modtale {
+        enabled = true
+        projectId = project.property('${key}').toString()
+    }`);
+        }
+    }
+    if (data.publishCurseforge) {
+        const key = propertyName('curseforge_project_id');
+        if (data.buildDsl === 'kotlin') {
+            platforms.push(`    curseforge {
+        enabled = true
+        projectId = property("${key}").toString()
+    }`);
+        }
+        else {
+            platforms.push(`    curseforge {
+        enabled = true
+        projectId = project.property('${key}').toString()
+    }`);
+        }
+    }
+    if (data.publishModifold) {
+        const key = propertyName('modifold_project_slug');
+        if (data.buildDsl === 'kotlin') {
+            platforms.push(`    modifold {
+        enabled = true
+        projectId = property("${key}").toString()
+    }`);
+        }
+        else {
+            platforms.push(`    modifold {
+        enabled = true
+        projectId = project.property('${key}').toString()
+    }`);
+        }
+    }
+    if (platforms.length === 0)
+        return '';
+    return `
+
+hytalePublisher {
+${platforms.join('\n\n')}
+}
+`;
 }
 function maybeCatalogComment(data) {
     if (!hasVersionCatalog(data))
@@ -43,38 +116,171 @@ function parseDependencyMap(raw) {
     }
     return map;
 }
+function sanitizeModuleName(value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+export function getModProjectNames(data) {
+    const primary = sanitizeModuleName(data.modId);
+    const extras = data.additionalModIds
+        .split(/[\n,]+/)
+        .map(sanitizeModuleName)
+        .filter(Boolean)
+        .filter((name) => name !== primary);
+    return Array.from(new Set([primary, ...extras]));
+}
+function buildPublisherProperties(data) {
+    const lines = ['', '# HytalePublisher'];
+    if (data.projectLayout === 'multi-project') {
+        for (const moduleName of getModProjectNames(data)) {
+            lines.push('', `# ${moduleName} publishing`);
+            if (data.publishModtale) {
+                lines.push(`${propertyKeyForModule(moduleName, 'modtale_project_id')} = ${moduleName === sanitizeModuleName(data.modId)
+                    ? data.modtaleProjectId || `your-${moduleName}-modtale-project-id`
+                    : `your-${moduleName}-modtale-project-id`}`);
+            }
+            if (data.publishCurseforge) {
+                lines.push(`${propertyKeyForModule(moduleName, 'curseforge_project_id')} = ${moduleName === sanitizeModuleName(data.modId)
+                    ? data.curseforgeProjectId || '123456'
+                    : '123456'}`);
+            }
+            if (data.publishModifold) {
+                lines.push(`${propertyKeyForModule(moduleName, 'modifold_project_slug')} = ${moduleName === sanitizeModuleName(data.modId)
+                    ? data.modifoldProjectSlug || moduleName
+                    : moduleName}`);
+            }
+        }
+        return `${lines.join('\n')}\n`;
+    }
+    if (data.publishModtale) {
+        lines.push(`modtale_project_id = ${data.modtaleProjectId || 'your-modtale-project-id'}`);
+    }
+    if (data.publishCurseforge) {
+        lines.push(`curseforge_project_id = ${data.curseforgeProjectId || '123456'}`);
+    }
+    if (data.publishModifold) {
+        lines.push(`modifold_project_slug = ${data.modifoldProjectSlug || 'your-modifold-project-slug'}`);
+    }
+    return `${lines.join('\n')}\n`;
+}
+function futureHytaleVersion(version) {
+    const match = version.trim().match(/^v?(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
+    if (!match) {
+        return '';
+    }
+    const major = Number(match[1]);
+    const minor = Number(match[2]);
+    return `${major}.${minor + 1}.0`;
+}
+function manifestServerVersion(data) {
+    const nextVersion = futureHytaleVersion(data.hytaleVersion);
+    return nextVersion
+        ? `>=${data.hytaleVersion} <${nextVersion}`
+        : data.hytaleVersion;
+}
+function authorNames(data) {
+    return data.modAuthor
+        .split(',')
+        .map((author) => author.trim())
+        .filter(Boolean);
+}
 export function buildGradleProperties(data) {
     const parsedMain = parseMainClass(data.mainClass, data.group);
-    return `# Gradle
+    return `# Gradle runtime options
+# Enables the Gradle daemon for faster repeat builds.
 org.gradle.daemon = true
+
+# JVM memory used by Gradle while building the project.
 org.gradle.jvmargs = -Xmx3G
+
+# Allows Gradle to build independent tasks in parallel.
 org.gradle.parallel = true
+
+# Enables Gradle's local build cache.
 org.gradle.caching = true
 
-# Common
+# Java / Hytale options
+# Java version used by the generated mod project.
 java_version = ${data.javaVersion}
-hytale_version = ${data.hytaleVersion}
-release_type = ${releaseType(data)}
 
-# Mod options
+# Hytale server version targeted by this mod.
+hytale_version = ${data.hytaleVersion}
+
+# Mod identity
+# Java package group used by Gradle.
 group = ${data.group}
+
+# Group identifier written into manifest.json.
 manifest_group = ${data.manifestGroup}
+
+# Human-readable mod name.
 mod_name = ${data.modName}
+
+# Fully-qualified plugin entry point class.
 main_class = ${parsedMain.fullMainClass}
+
+# Comma-separated author handles. Author names cannot contain spaces.
 mod_author = ${data.modAuthor}
+
+# Unique lowercase mod identifier.
 mod_id = ${data.modId}
+
+# SPDX-style license identifier or Proprietary.
 mod_license = ${data.modLicense}
+
+# Short description written into manifest.json.
 mod_description = ${data.modDescription}
+
+# Project website, source, or download URL.
 mod_url = ${data.modUrl}
+
+# Initial mod version.
 version = ${data.version}
+
+# Manifest / packaging options
+# Whether this mod includes an asset pack.
 includes_pack = ${data.includesPack}
+
+# Whether this mod starts disabled by default.
 disabled_by_default = ${data.disabledByDefault}
+
+# Hytale patchline used for dependency resolution.
 patchline = ${data.patchline}
+
+# Server version mirrored for tooling compatibility.
 server_version = ${data.hytaleVersion}
+
+# Server version range written into manifest.json.
+manifestServerVersion = ${manifestServerVersion(data)}
+
+# Required manifest dependencies. Format: Group:Name=Version,Other:Mod=*
 manifest_dependencies = ${data.manifestDependencies}
+
+# Optional manifest dependencies. Same format as manifest_dependencies.
 manifest_opt_dependencies = ${data.manifestOptionalDependencies}
+
+# CurseForge project ID used by update checking, if any.
 curseforgeID = ${data.curseforgeID}
-`;
+${data.usePublisher
+        ? `
+# HytalePublisher options
+${data.publishModtale
+            ? `# Modtale project ID.
+modtale_project_id = ${data.modtaleProjectId || 'your-modtale-project-id'}
+`
+            : ''}${data.publishCurseforge
+            ? `# CurseForge project ID.
+curseforge_project_id = ${data.curseforgeProjectId || '123456'}
+`
+            : ''}${data.publishModifold
+            ? `# Modifold project slug.
+modifold_project_slug = ${data.modifoldProjectSlug || 'your-modifold-project-slug'}
+`
+            : ''}`
+        : ''}`;
 }
 export function buildManifestFile(data) {
     const parsedMain = parseMainClass(data.mainClass, data.group);
@@ -83,13 +289,9 @@ export function buildManifestFile(data) {
         Name: data.modId,
         Version: data.version,
         Description: data.modDescription,
-        Authors: [
-            {
-                Name: data.modAuthor
-            }
-        ],
+        Authors: authorNames(data).map((Name) => ({ Name })),
         Website: data.modUrl,
-        ServerVersion: data.hytaleVersion,
+        ServerVersion: manifestServerVersion(data),
         Dependencies: parseDependencyMap(data.manifestDependencies),
         OptionalDependencies: parseDependencyMap(data.manifestOptionalDependencies),
         DisabledByDefault: data.disabledByDefault,
@@ -175,27 +377,7 @@ public class ${parsedMain.className} extends JavaPlugin {
 export function buildSettingsFile(data) {
     const projectName = data.modName.replace(/'/g, "\\'");
     const catalogBlock = hasVersionCatalog(data)
-        ? data.buildDsl === 'kotlin'
-            ? `
-
-dependencyResolutionManagement {
-    versionCatalogs {
-        create("libs") {
-            from(files("gradle/libs.versions.toml"))
-        }
-    }
-}
-`
-            : `
-
-dependencyResolutionManagement {
-    versionCatalogs {
-        libs {
-            from(files('gradle/libs.versions.toml'))
-        }
-    }
-}
-`
+        ? '\n// Gradle automatically imports gradle/libs.versions.toml as the libs catalog.\n'
         : '\n';
     if (data.buildDsl === 'kotlin') {
         return {
@@ -238,6 +420,234 @@ plugins {
 rootProject.name = '${projectName}'${catalogBlock}`
     };
 }
+export function buildWorkspaceSettingsFile(data) {
+    const projectName = data.modName.replace(/'/g, "\\'");
+    const modules = ['common', ...getModProjectNames(data)];
+    const includeLine = data.buildDsl === 'kotlin'
+        ? modules.map((name) => `"${name}"`).join(', ')
+        : modules.map((name) => `'${name}'`).join(', ');
+    const catalogBlock = hasVersionCatalog(data)
+        ? '// Gradle automatically imports gradle/libs.versions.toml as the libs catalog.\n'
+        : '\n';
+    if (data.buildDsl === 'kotlin') {
+        return {
+            path: 'settings.gradle.kts',
+            contents: `pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+        maven {
+            name = "AzureDoom Maven"
+            url = uri("https://maven.azuredoom.com/mods")
+        }
+    }
+}
+
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
+
+rootProject.name = "${projectName.replace(/"/g, '\\"')}"
+include(${includeLine})
+${catalogBlock}`
+        };
+    }
+    return {
+        path: 'settings.gradle',
+        contents: `pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+        maven {
+            name = 'AzureDoom Maven'
+            url = uri("https://maven.azuredoom.com/mods")
+        }
+    }
+}
+
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
+
+rootProject.name = '${projectName}'
+include ${includeLine}
+${catalogBlock}`
+    };
+}
+export function buildWorkspaceRootBuildFile(data) {
+    const modProjects = getModProjectNames(data).map((name) => `:${name}`);
+    const hostProject = `:${sanitizeModuleName(data.modId)}`;
+    if (data.buildDsl === 'kotlin') {
+        return {
+            path: 'build.gradle.kts',
+            contents: `plugins {
+    id("com.azuredoom.hytale-workspace") version "1.+"
+}
+
+subprojects {
+    tasks.register("prepareKotlinBuildScriptModel") {
+        dependsOn(rootProject.tasks.named("prepareKotlinBuildScriptModel"))
+    }
+}
+
+hytaleWorkspace {
+    modProjects = listOf(${modProjects.map((p) => `"${p}"`).join(', ')})
+    hostProject = "${hostProject}"
+
+    manifestGroup = property("manifest_group").toString()
+    hytaleVersion = property("hytale_version").toString()
+    patchline = property("patchline").toString()
+}
+`
+        };
+    }
+    return {
+        path: 'build.gradle',
+        contents: `plugins {
+    id 'com.azuredoom.hytale-workspace' version '1.+'
+}
+
+subprojects {
+    tasks.register('prepareKotlinBuildScriptModel') {
+        dependsOn(rootProject.tasks.named('prepareKotlinBuildScriptModel'))
+    }
+}
+
+hytaleWorkspace {
+    modProjects = [${modProjects.map((p) => `'${p}'`).join(', ')}]
+    hostProject = '${hostProject}'
+
+    manifestGroup = project.manifest_group.toString()
+    hytaleVersion = project.hytale_version.toString()
+    patchline = project.patchline.toString()
+}
+`
+    };
+}
+export function buildCommonBuildFile(data) {
+    if (data.buildDsl === 'kotlin') {
+        return {
+            path: 'common/build.gradle.kts',
+            contents: `plugins {
+    \`java-library\`
+}
+
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(property("java_version").toString().toInt()))
+}
+
+repositories {
+    mavenCentral()
+}
+`
+        };
+    }
+    return {
+        path: 'common/build.gradle',
+        contents: `plugins {
+    id 'java-library'
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+}
+
+repositories {
+    mavenCentral()
+}
+`
+    };
+}
+export function buildModSubprojectBuildFile(data, moduleName) {
+    const modId = moduleName;
+    const mainClass = parseMainClass(data.mainClass, data.group).fullMainClass;
+    if (data.buildDsl === 'kotlin') {
+        return {
+            path: `${moduleName}/build.gradle.kts`,
+            contents: `plugins {
+    idea
+    java
+    id("com.azuredoom.hytale-tools")
+${data.projectLanguage === 'kotlin' ? `    kotlin("jvm") version "${KOTLIN_VERSION}"\n` : ''}${hytalePublisherPluginLine(data)}}
+
+group = property("group").toString()
+
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(property("java_version").toString().toInt()))
+}
+
+dependencies {
+    implementation(project(":common"))
+}
+
+hytaleTools {
+    javaVersion = property("java_version").toString().toInt()
+    hytaleVersion = property("hytale_version").toString()
+    manifestServerVersion = property("manifestServerVersion").toString()
+    manifestGroup = property("manifest_group").toString()
+    modId = "${modId}"
+    modDescription = property("mod_description").toString()
+    modUrl = property("mod_url").toString()
+    mainClass = "${mainClass}"
+    modCredits = property("mod_author").toString()
+    manifestDependencies = property("manifest_dependencies").toString()
+    manifestOptionalDependencies = property("manifest_opt_dependencies").toString()
+    curseforgeId = property("${propertyKeyForModule(moduleName, 'curseforge_project_id')}").toString()
+    disabledByDefault = property("disabled_by_default").toString().toBoolean()
+    includesPack = property("includes_pack").toString().toBoolean()
+    patchline = property("patchline").toString()
+}
+
+repositories {
+    mavenCentral()
+}
+${hytalePublisherBlock(data, moduleName)}
+`
+        };
+    }
+    return {
+        path: `${moduleName}/build.gradle`,
+        contents: `plugins {
+    id 'idea'
+    id 'java'
+    id 'com.azuredoom.hytale-tools'
+${data.projectLanguage === 'kotlin' ? `    id 'org.jetbrains.kotlin.jvm' version '${KOTLIN_VERSION}'\n` : ''}${hytalePublisherPluginLine(data)}}
+
+group = project.group
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+}
+
+dependencies {
+    implementation project(':common')
+}
+
+hytaleTools {
+    javaVersion = project.java_version as Integer
+    hytaleVersion = project.hytale_version.toString()
+    manifestServerVersion = project.manifestServerVersion.toString()
+    manifestGroup = project.manifest_group.toString()
+    modId = '${modId}'
+    modDescription = project.mod_description.toString()
+    modUrl = project.mod_url.toString()
+    mainClass = '${mainClass}'
+    modCredits = project.mod_author.toString()
+    manifestDependencies = project.manifest_dependencies.toString()
+    manifestOptionalDependencies = project.manifest_opt_dependencies.toString()
+    curseforgeId = project.property('${propertyKeyForModule(moduleName, 'curseforge_project_id')}').toString()
+    disabledByDefault = project.disabled_by_default.toString().toBoolean()
+    includesPack = project.includes_pack.toString().toBoolean()
+    patchline = project.patchline.toString()
+}
+
+repositories {
+    mavenCentral()
+}
+${hytalePublisherBlock(data, moduleName)}
+`
+    };
+}
 export function buildBuildFile(data) {
     const catalogComment = maybeCatalogComment(data);
     if (data.buildDsl === 'kotlin') {
@@ -245,7 +655,7 @@ export function buildBuildFile(data) {
         const pluginBlock = `plugins {
     idea
     java
-${hytaleToolsPluginLine(data)}${kotlinPlugin}}
+${hytaleToolsPluginLine(data)}${kotlinPlugin}${hytalePublisherPluginLine(data)}}
 `;
         const sourceSets = data.projectLanguage === 'kotlin'
             ? `
@@ -274,6 +684,7 @@ java {
 hytaleTools {
     javaVersion = property("java_version").toString().toInt()
     hytaleVersion = property("hytale_version").toString()
+    manifestServerVersion = property("manifestServerVersion").toString()
     manifestGroup = property("manifest_group").toString()
     modId = property("mod_id").toString()
     modDescription = property("mod_description").toString()
@@ -292,14 +703,13 @@ repositories {
     mavenCentral()
 }
 ${sourceSets}
-val serverRunDir = file("$projectDir/run")
 idea {
     module {
         isDownloadSources = true
         isDownloadJavadoc = true
     }
 }
-`
+${hytalePublisherBlock(data)}`
         };
     }
     const kotlinPlugin = kotlinPluginLine(data);
@@ -318,7 +728,7 @@ sourceSets {
         contents: `plugins {
     id 'idea'
     id 'java'
-${hytaleToolsPluginLine(data)}${kotlinPlugin}}${catalogComment}
+${hytaleToolsPluginLine(data)}${kotlinPlugin}${hytalePublisherPluginLine(data)}}${catalogComment}
 
 javadoc {
     options.addStringOption('Xdoclint:-missing', '-quiet')
@@ -333,6 +743,7 @@ java {
 hytaleTools {
     javaVersion = project.java_version as Integer
     hytaleVersion = project.hytale_version.toString()
+    manifestServerVersion = project.manifestServerVersion.toString()
     manifestGroup = project.manifest_group.toString()
     modId = project.mod_id.toString()
     modDescription = project.mod_description.toString()
@@ -357,21 +768,23 @@ idea {
         downloadJavadoc = true
     }
 }
-`
+${hytalePublisherBlock(data)}`
     };
 }
 export function buildVersionCatalog(data) {
     const header = `# Generated for ${data.modName}\n# version_catalog_mode=${data.versionCatalogMode}\n\n`;
-    const base = `${header}[versions]
+    const versions = `[versions]
 hytale = "${data.hytaleVersion}"
-hytaleTools = "1.0.+"
-foojayResolver = "1.0.0"
+hytaleTools = "1.+"
+${data.usePublisher ? 'hytalePublisher = "1.+"\n' : ''}foojayResolver = "1.0.0"
 kotlin = "${KOTLIN_VERSION}"
-
+`;
+    const plugins = `
 [plugins]
 hytaleTools = { id = "com.azuredoom.hytale-tools", version.ref = "hytaleTools" }
-kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+${data.usePublisher ? 'hytalePublisher = { id = "com.azuredoom.hytalepublisher", version.ref = "hytalePublisher" }\n' : ''}kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 `;
+    const base = `${header}${versions}${plugins}`;
     if (data.versionCatalogMode === 'basic') {
         return `${base}
 # Basic mode keeps most dependency declarations inline in the generated Gradle files.
