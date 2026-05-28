@@ -59,7 +59,7 @@ const TOOLTIPS = {
   modName: 'The human-readable display name of your mod.',
   modId: 'A unique lowercase identifier for your mod. Used as the project folder name and in the manifest.',
   mainClass: 'The simple name of your plugin entry point class. The full class name is derived from your group.',
-  modAuthor: 'Your author name or handle. Author names cannot contain spaces. Use commas to add multiple authors, e.g. AzureDoom,SomeOtherAuthor.\nUsed in the manifest and the generated license file.',
+  modAuthor: 'Author name, handle, or author metadata. Use commas to add multiple authors. For each author, use Name, Name|Email, or Name|Email|Url. Author names cannot contain spaces, and commas or pipes cannot be used inside values. Example: AzureDoom|azuredoom@example.com|https://example.com,SomeOtherAuthor.\nUsed in the manifest and the generated license file.',
   version: 'The initial version string for your mod (e.g. 0.0.1).',
   modUrl: "A URL for your mod's project page (e.g. GitHub repo or CurseForge page).",
   modLicense: 'The software license applied to your mod. A LICENSE file will be generated automatically.',

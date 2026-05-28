@@ -277,7 +277,9 @@ mod_name = ${data.modName}
 # Fully-qualified plugin entry point class.
 main_class = ${parsedMain.fullMainClass}
 
-# Comma-separated author handles. Author names cannot contain spaces.
+# Comma-separated author entries. Author names cannot contain spaces.
+# Each entry supports: Name, Name|Email, or Name|Email|Url.
+# Example: AzureDoom|azuredoom@example.com|https://example.com,SomeOtherAuthor
 mod_author = ${data.modAuthor}
 
 # Unique lowercase mod identifier.
