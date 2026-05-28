@@ -670,3 +670,10 @@ select[aria-invalid='true'] {
   color: #ffb3b3;
   background: rgba(255, 107, 107, 0.1);
 }
+
+.field-error {
+  display: block;
+  margin-top: 0.35rem;
+  color: #ff6b6b;
+  font-size: 0.8rem;
+}

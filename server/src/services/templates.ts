@@ -234,6 +234,13 @@ function manifestServerVersion(data: ProjectInput) {
     : data.hytaleVersion;
 }
 
+function authorNames(data: ProjectInput) {
+  return data.modAuthor
+    .split(',')
+    .map((author) => author.trim())
+    .filter(Boolean);
+}
+
 export function buildGradleProperties(data: ProjectInput) {
   const parsedMain = parseMainClass(data.mainClass, data.group);
   return `# Gradle
@@ -274,11 +281,7 @@ export function buildManifestFile(data: ProjectInput) {
     Name: data.modId,
     Version: data.version,
     Description: data.modDescription,
-    Authors: [
-      {
-        Name: data.modAuthor
-      }
-    ],
+    Authors: authorNames(data).map((Name) => ({ Name })),
     Website: data.modUrl,
     ServerVersion: manifestServerVersion(data),
     Dependencies: parseDependencyMap(data.manifestDependencies),

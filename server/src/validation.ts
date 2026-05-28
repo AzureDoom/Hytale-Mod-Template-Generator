@@ -24,6 +24,39 @@ const moduleNameSchema = z
   .string()
   .regex(/^[a-z][a-z0-9_-]*$/, 'Module names must start with a lowercase letter and only contain lowercase letters, numbers, underscores, or hyphens.');
 
+const authorNamesSchema = z
+  .string()
+  .min(1, 'Author is required.')
+  .superRefine((value, ctx) => {
+    const authors = value.split(',').map((author) => author.trim());
+
+    if (authors.length === 0 || authors.some((author) => author.length === 0)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Author names must be comma-separated and cannot be empty.',
+      });
+      return;
+    }
+
+    for (const author of authors) {
+      if (/\s/.test(author)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'Author names cannot contain spaces. Use commas to add multiple authors.',
+        });
+        return;
+      }
+    }
+  })
+  .transform((value) =>
+    value
+      .split(',')
+      .map((author) => author.trim())
+      .filter(Boolean)
+      .join(',')
+  );
+
 export const projectInputSchema = z.object({
   projectLayout: z.enum(['standalone', 'multi-project']).default('standalone'),
   additionalModIds: z
@@ -53,7 +86,7 @@ export const projectInputSchema = z.object({
   manifestGroup: z.string().min(1, 'Manifest group is required.'),
   modName: z.string().min(1, 'Mod name is required.'),
   mainClass: z.string().min(1, 'Main class is required.'),
-  modAuthor: z.string().min(1, 'Author is required.'),
+  modAuthor: authorNamesSchema,
   modId: z.string().min(1, 'Mod ID is required.'),
   modDescription: z.string().min(1, 'Description is required.'),
   modUrl: z

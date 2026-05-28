@@ -1,6 +1,23 @@
 import type { ChangeEvent } from 'react';
 import type { ProjectFormData } from '../types';
 
+function getAuthorError(value: string) {
+  const authors = value
+    .split(',')
+    .map((author) => author.trim())
+    .filter(Boolean);
+
+  if (authors.length === 0) {
+    return 'At least one author is required.';
+  }
+
+  if (authors.some((author) => /\s/.test(author))) {
+    return 'Author names cannot contain spaces. Use commas to add multiple authors.';
+  }
+
+  return '';
+}
+
 interface Props {
   value: ProjectFormData;
   versions: string[];
@@ -42,7 +59,7 @@ const TOOLTIPS = {
   modName: 'The human-readable display name of your mod.',
   modId: 'A unique lowercase identifier for your mod. Used as the project folder name and in the manifest.',
   mainClass: 'The simple name of your plugin entry point class. The full class name is derived from your group.',
-  modAuthor: 'Your name or handle. Used in the manifest and the generated license file.',
+  modAuthor: 'Your author name or handle. Author names cannot contain spaces. Use commas to add multiple authors, e.g. AzureDoom,SomeOtherAuthor.\nUsed in the manifest and the generated license file.',
   version: 'The initial version string for your mod (e.g. 0.0.1).',
   modUrl: "A URL for your mod's project page (e.g. GitHub repo or CurseForge page).",
   modLicense: 'The software license applied to your mod. A LICENSE file will be generated automatically.',
@@ -124,6 +141,7 @@ export function ProjectForm({ value, versions, onChange, onSubmit, loading }: Pr
 
   const errors = validateProjectForm(value);
   const hasErrors = Object.keys(errors).length > 0;
+  const authorError = getAuthorError(value.modAuthor);
 
   return (
     <>
@@ -249,9 +267,11 @@ export function ProjectForm({ value, versions, onChange, onSubmit, loading }: Pr
             name="modAuthor"
             value={value.modAuthor}
             onChange={handleInput}
-            aria-invalid={Boolean(errors.modAuthor)}
+            aria-invalid={Boolean(authorError)}
+            title="Author names cannot contain spaces. Use commas to add multiple authors."
+            placeholder="AzureDoom,AnotherAuthor"
           />
-          <FieldError message={errors.modAuthor} />
+          {authorError && <small className="field-error">{authorError}</small>}
         </label>
         <label>
           <span>Version <Tooltip text={TOOLTIPS.version} /></span>
@@ -392,8 +412,8 @@ export function ProjectForm({ value, versions, onChange, onSubmit, loading }: Pr
       <button
         className="full-width"
         onClick={onSubmit}
-        disabled={loading || hasErrors}
-        title={hasErrors ? 'Fix the highlighted fields before generating.' : undefined}
+        disabled={loading || hasErrors || Boolean(authorError)}
+        title={hasErrors || authorError ? 'Fix the highlighted fields before generating.' : undefined}
       >
         {loading ? 'Generating…' : 'Generate Zip'}
       </button>
