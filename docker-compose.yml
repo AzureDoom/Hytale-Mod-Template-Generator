@@ -1,0 +1,15 @@
+services:
+  hytale-template-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hytale-template-generator:local
+    container_name: hytale-template-generator
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      APP_ORIGIN: "*"
+      SHOW_STATUS_BANNER: "true"
