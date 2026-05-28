@@ -243,35 +243,104 @@ function authorNames(data: ProjectInput) {
 
 export function buildGradleProperties(data: ProjectInput) {
   const parsedMain = parseMainClass(data.mainClass, data.group);
-  return `# Gradle
+
+  return `# Gradle runtime options
+# Enables the Gradle daemon for faster repeat builds.
 org.gradle.daemon = true
+
+# JVM memory used by Gradle while building the project.
 org.gradle.jvmargs = -Xmx3G
+
+# Allows Gradle to build independent tasks in parallel.
 org.gradle.parallel = true
+
+# Enables Gradle's local build cache.
 org.gradle.caching = true
 
-# Common
+# Java / Hytale options
+# Java version used by the generated mod project.
 java_version = ${data.javaVersion}
+
+# Hytale server version targeted by this mod.
 hytale_version = ${data.hytaleVersion}
 
-# Mod options
+# Mod identity
+# Java package group used by Gradle.
 group = ${data.group}
+
+# Group identifier written into manifest.json.
 manifest_group = ${data.manifestGroup}
+
+# Human-readable mod name.
 mod_name = ${data.modName}
+
+# Fully-qualified plugin entry point class.
 main_class = ${parsedMain.fullMainClass}
+
+# Comma-separated author handles. Author names cannot contain spaces.
 mod_author = ${data.modAuthor}
+
+# Unique lowercase mod identifier.
 mod_id = ${data.modId}
+
+# SPDX-style license identifier or Proprietary.
 mod_license = ${data.modLicense}
+
+# Short description written into manifest.json.
 mod_description = ${data.modDescription}
+
+# Project website, source, or download URL.
 mod_url = ${data.modUrl}
+
+# Initial mod version.
 version = ${data.version}
+
+# Manifest / packaging options
+# Whether this mod includes an asset pack.
 includes_pack = ${data.includesPack}
+
+# Whether this mod starts disabled by default.
 disabled_by_default = ${data.disabledByDefault}
+
+# Hytale patchline used for dependency resolution.
 patchline = ${data.patchline}
-manifestServerVersion = ${manifestServerVersion(data)}
+
+# Server version mirrored for tooling compatibility.
+server_version = ${data.hytaleVersion}
+
+# Required manifest dependencies. Format: Group:Name=Version,Other:Mod=*
 manifest_dependencies = ${data.manifestDependencies}
+
+# Optional manifest dependencies. Same format as manifest_dependencies.
 manifest_opt_dependencies = ${data.manifestOptionalDependencies}
+
+# CurseForge project ID used by update checking, if any.
 curseforgeID = ${data.curseforgeID}
-${data.usePublisher ? buildPublisherProperties(data) : ''}`;
+${
+  data.usePublisher
+    ? `
+# HytalePublisher options
+${
+  data.publishModtale
+    ? `# Modtale project ID.
+modtale_project_id = ${data.modtaleProjectId || 'your-modtale-project-id'}
+`
+    : ''
+}${
+        data.publishCurseforge
+          ? `# CurseForge project ID.
+curseforge_project_id = ${data.curseforgeProjectId || '123456'}
+`
+          : ''
+      }${
+        data.publishModifold
+          ? `# Modifold project slug.
+modifold_project_slug = ${data.modifoldProjectSlug || 'your-modifold-project-slug'}
+`
+          : ''
+      }`
+    : ''
+}`;
 }
 
 export function buildManifestFile(data: ProjectInput) {
