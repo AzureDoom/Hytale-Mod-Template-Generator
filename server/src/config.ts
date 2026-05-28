@@ -5,7 +5,7 @@ export const config = {
   appOrigin: process.env.APP_ORIGIN || '*',
   gradleDistributionUrl:
     process.env.GRADLE_DISTRIBUTION_URL ||
-    'https://services.gradle.org/distributions/gradle-9.4.0-bin.zip',
+    'https://services.gradle.org/distributions/gradle-9.5.1-bin.zip',
   hytaleMavenReleaseUrl:
     process.env.HYTALE_MAVEN_RELEASE_URL ||
     'https://maven.hytale.com/release',

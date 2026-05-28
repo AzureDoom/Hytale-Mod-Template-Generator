@@ -169,7 +169,7 @@ The minimum viable `.env` for local development is:
 ```env
 PORT=3001
 APP_ORIGIN=http://localhost:5173
-GRADLE_DISTRIBUTION_URL=https://services.gradle.org/distributions/gradle-9.4.0-bin.zip
+GRADLE_DISTRIBUTION_URL=https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 ```
 
 ### 4. Start the development servers
@@ -197,7 +197,7 @@ All variables are read from `server/.env` (loaded by `dotenv` at startup). Every
 |-------------------------------|------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
 | `PORT`                        | `3001`                                                           | Port the Express server listens on.                                                                                                  |
 | `APP_ORIGIN`                  | `*`                                                              | CORS allowed origin. Set to your frontend URL in production (e.g. `https://yoursite.com`). `*` allows all origins.                   |
-| `GRADLE_DISTRIBUTION_URL`     | `https://services.gradle.org/distributions/gradle-9.4.0-bin.zip` | Gradle distribution URL embedded in generated `gradle-wrapper.properties`. The server derives the wrapper JAR version from this URL. |
+| `GRADLE_DISTRIBUTION_URL`     | `https://services.gradle.org/distributions/gradle-9.5.1-bin.zip` | Gradle distribution URL embedded in generated `gradle-wrapper.properties`. The server derives the wrapper JAR version from this URL. |
 | `HYTALE_MAVEN_RELEASE_URL`    | `https://maven.hytale.com/release`                               | Base URL of the Hytale Maven release repository, used to fetch available versions.                                                   |
 | `HYTALE_MAVEN_PRERELEASE_URL` | `https://maven.hytale.com/pre-release`                           | Base URL of the Hytale Maven pre-release repository.                                                                                 |
 | `SHOW_STATUS_BANNER`          | *(unset / false)*                                                | Set to `true` to show a live status banner in the UI (useful for maintenance notices).                                               |
@@ -400,7 +400,7 @@ A minimal production `.env`:
 ```env
 PORT=3001
 APP_ORIGIN=https://yoursite.com
-GRADLE_DISTRIBUTION_URL=https://services.gradle.org/distributions/gradle-9.4.0-bin.zip
+GRADLE_DISTRIBUTION_URL=https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 ```
 
 ### Reverse proxy (recommended)
