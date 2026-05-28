@@ -1,1 +1,1 @@
-{"root":["./src/App.tsx","./src/main.tsx","./src/types.ts","./src/components/PreviewPanel.tsx","./src/components/ProjectForm.tsx","./src/lib/api.ts","./src/lib/defaults.ts"],"version":"5.9.3"}
+{"root":["./src/App.tsx","./src/main.tsx","./src/types.ts","./src/vite-env.d.ts","./src/components/PreviewPanel.tsx","./src/components/ProjectForm.tsx","./src/components/StatusPage.tsx","./src/lib/api-status.ts","./src/lib/api.ts","./src/lib/defaults.ts","./src/lib/presets.ts","./src/lib/share-url.ts"],"version":"6.0.3"}
