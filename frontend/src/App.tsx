@@ -3,8 +3,11 @@ import { StatusPage } from './components/StatusPage';
 import { ProjectForm } from './components/ProjectForm';
 import { PreviewPanel } from './components/PreviewPanel';
 import { defaultFormData } from './lib/defaults';
-import { generateProject, getAppConfig, getVersions } from './lib/api';
+import { generateProject, getAppConfig, getVersions, previewProject } from './lib/api';
 import type { ProjectFormData } from './types';
+import type { PreviewResponse } from './lib/api';
+import { buildShareUrl, readFormDataFromUrl, writeFormDataToUrl } from './lib/share-url';
+import { PRESETS } from './lib/presets';
 
 const FALLBACK_VERSION = '2026.02.19-1a311a592';
 
@@ -154,12 +157,19 @@ function useHashRoute(): string {
 }
 
 export function App() {
-  const [formData, setFormData] = useState<ProjectFormData>(defaultFormData);
+  const [formData, setFormData] = useState<ProjectFormData>(() => ({
+    ...defaultFormData,
+    ...readFormDataFromUrl()
+  }));
   const [versions, setVersions] = useState<string[]>([FALLBACK_VERSION]);
   const [status, setStatus] = useState('Loading versions…');
   const [error, setError] = useState('');
   const [showStatusBanner, setShowStatusBanner] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<PreviewResponse | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState('');
+  const [activeTab, setActiveTab] = useState<'settings' | 'preview'>('settings');
   const hash = useHashRoute();
 
   useEffect(() => {
@@ -167,6 +177,42 @@ export function App() {
       .then((result) => setShowStatusBanner(result.showStatusBanner))
       .catch(() => setShowStatusBanner(false));
   }, []);
+  
+  useEffect(() => {
+    writeFormDataToUrl(formData);
+  }, [formData]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+  
+    setPreviewLoading(true);
+    setPreviewError('');
+  
+    const timeout = window.setTimeout(() => {
+      const payload = {
+        ...formData,
+        hytaleVersion: formData.hytaleVersion || versions[0] || FALLBACK_VERSION
+      };
+  
+      previewProject(payload, controller.signal)
+        .then(setPreview)
+        .catch((error) => {
+          if (!controller.signal.aborted) {
+            setPreviewError(error instanceof Error ? error.message : 'Preview failed');
+          }
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) {
+            setPreviewLoading(false);
+          }
+        });
+    }, 350);
+  
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeout);
+    };
+  }, [formData, versions]);
 
   useEffect(() => {
     getVersions(formData.patchline)
@@ -232,6 +278,21 @@ export function App() {
     }
   }
 
+  function applyPreset(presetId: string) {
+    const preset = PRESETS.find((entry) => entry.id === presetId);
+    if (!preset) return;
+
+    setFormData((current) => ({
+      ...current,
+      ...preset.apply
+    }));
+  }
+
+  async function copyShareUrl() {
+    await navigator.clipboard.writeText(buildShareUrl(formData));
+    setStatus('Shareable preset URL copied.');
+  }
+
   return (
     <>
       {/* Background layers */}
@@ -288,15 +349,17 @@ export function App() {
           </div>
         )}
 
-        {/* Main panels */}
+        {/* Main panel */}
         <div className="layout">
           <div className="os-panel">
             <span className="os-panel-corner-tr" aria-hidden="true" />
             <span className="os-panel-corner-bl" aria-hidden="true" />
 
             <div className="panel-titlebar">
-              <span className="panel-titlebar-id">GEN::001</span>
-              <h2>Project settings</h2>
+              <span className="panel-titlebar-id">
+                {activeTab === 'settings' ? 'GEN::001' : 'OUT::002'}
+              </span>
+              <h2>{activeTab === 'settings' ? 'Project settings' : 'Output preview'}</h2>
               <div className="panel-titlebar-dots">
                 <span />
                 <span />
@@ -304,30 +367,63 @@ export function App() {
               </div>
             </div>
 
-            <ProjectForm
-              value={formData}
-              versions={versions}
-              onChange={setFormData}
-              onSubmit={handleSubmit}
-              loading={loading}
-            />
-          </div>
+            <div className="tab-row" role="tablist" aria-label="Generator sections">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'settings'}
+                className={activeTab === 'settings' ? 'active' : ''}
+                onClick={() => setActiveTab('settings')}
+              >
+                Project Settings
+              </button>
 
-          <div className="os-panel">
-            <span className="os-panel-corner-tr" aria-hidden="true" />
-            <span className="os-panel-corner-bl" aria-hidden="true" />
-
-            <div className="panel-titlebar">
-              <span className="panel-titlebar-id">OUT::002</span>
-              <h2>Output preview</h2>
-              <div className="panel-titlebar-dots">
-                <span />
-                <span />
-                <span />
-              </div>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'preview'}
+                className={activeTab === 'preview' ? 'active' : ''}
+                onClick={() => setActiveTab('preview')}
+              >
+                Output Preview
+                {preview?.files.length ? <span>{preview.files.length}</span> : null}
+              </button>
             </div>
 
-            <PreviewPanel value={formData} />
+            {activeTab === 'settings' ? (
+              <>
+                <div className="preset-row">
+                  {PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => applyPreset(preset.id)}
+                      title={preset.description}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+
+                  <button type="button" onClick={copyShareUrl}>
+                    Copy Share URL
+                  </button>
+                </div>
+
+                <ProjectForm
+                  value={formData}
+                  versions={versions}
+                  onChange={setFormData}
+                  onSubmit={handleSubmit}
+                  loading={loading}
+                />
+              </>
+            ) : (
+              <PreviewPanel
+                preview={preview}
+                loading={previewLoading}
+                error={previewError}
+              />
+            )}
           </div>
         </div>
 

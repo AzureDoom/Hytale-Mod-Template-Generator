@@ -1,3 +1,6 @@
+import type { z } from 'zod';
+import type { projectInputSchema } from './validation.js';
+
 export type ProjectLayout = 'standalone' | 'multi-project';
 export type Patchline = 'release' | 'pre-release';
 export type BuildDsl = 'groovy' | 'kotlin';
@@ -22,7 +25,8 @@ export type LicenseOption =
   | 'EUPL-1.2'
   | 'Proprietary';
 
-export interface ProjectInput {
+
+export interface ProjectFormData {
   projectLayout: ProjectLayout;
   additionalModIds: string;
   patchline: Patchline;
@@ -40,12 +44,9 @@ export interface ProjectInput {
   versionCatalogMode: VersionCatalogMode;
   buildDsl: BuildDsl;
   projectLanguage: ProjectLanguage;
-  javaVersion: number;
-  manifestDependencies: string;
-  manifestOptionalDependencies: string;
-  curseforgeID: string;
   disabledByDefault: boolean;
   includesPack: boolean;
+  javaVersion: number;
   usePublisher: boolean;
   publishModtale: boolean;
   modtaleProjectId: string;
@@ -54,3 +55,5 @@ export interface ProjectInput {
   publishModifold: boolean;
   modifoldProjectSlug: string;
 }
+
+export type ProjectInput = z.infer<typeof projectInputSchema>;

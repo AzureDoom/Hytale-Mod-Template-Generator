@@ -1,122 +1,93 @@
-import type { ProjectFormData } from '../types';
+import { useEffect, useMemo, useState } from 'react';
+import type { PreviewResponse } from '../lib/api';
 
 interface Props {
-  value: ProjectFormData;
+  preview: PreviewResponse | null;
+  loading: boolean;
+  error?: string;
 }
 
-function normalizeModuleName(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
+export function PreviewPanel({ preview, loading, error }: Props) {
+  const textFiles = useMemo(
+    () => preview?.files.filter((file) => !file.binary) ?? [],
+    [preview]
+  );
 
-function getPreviewModProjects(value: ProjectFormData) {
-  const primary = normalizeModuleName(value.modId || 'my-mod');
+  const [selectedPath, setSelectedPath] = useState<string>('');
 
-  const extras = (value.additionalModIds || '')
-    .split(/[\n,]+/)
-    .map(normalizeModuleName)
-    .filter(Boolean)
-    .filter((name) => name !== primary);
+  useEffect(() => {
+    if (!textFiles.length) {
+      setSelectedPath('');
+      return;
+    }
 
-  return Array.from(new Set([primary, ...extras]));
-}
+    if (!textFiles.some((file) => file.path === selectedPath)) {
+      setSelectedPath(textFiles[0].path);
+    }
+  }, [textFiles, selectedPath]);
 
-function futureHytaleVersion(version: string) {
-  const match = version.trim().match(/^v?(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
+  const selectedFile =
+    textFiles.find((file) => file.path === selectedPath) ??
+    textFiles[0] ??
+    null;
 
-  if (!match) return '';
+  if (loading) {
+    return <p className="muted">Rendering generated files…</p>;
+  }
 
-  const major = Number(match[1]);
-  const minor = Number(match[2]);
+  if (error) {
+    return <p className="error">{error}</p>;
+  }
 
-  return `${major}.${minor + 1}.0`;
-}
-
-function manifestServerVersion(version: string) {
-  const nextVersion = futureHytaleVersion(version);
-
-  return nextVersion ? `>=${version} <${nextVersion}` : version;
-}
-
-function toPascalCase(value: string) {
-  return value
-    .split(/[-_]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join('');
-}
-
-export function PreviewPanel({ value }: Props) {
-  const buildFile = value.buildDsl === 'kotlin' ? 'build.gradle.kts' : 'build.gradle';
-  const settingsFile = value.buildDsl === 'kotlin' ? 'settings.gradle.kts' : 'settings.gradle';
-  const sourceExt = value.projectLanguage === 'kotlin' ? 'kt' : 'java';
-  const sourceLang = value.projectLanguage === 'kotlin' ? 'kotlin' : 'java';
-  const sourceFile = `src/main/${sourceLang}/.../${value.mainClass || 'Main'}.${sourceExt}`;
-  const isMultiProject = value.projectLayout === 'multi-project';
-  const modProjects = getPreviewModProjects(value);
+  if (!preview) {
+    return <p className="muted">Configure your project to preview generated files.</p>;
+  }
 
   return (
-    <>
-      <ul className="preview-file-list">
-        {isMultiProject ? (
-          <>
-            <li>{buildFile}</li>
-            <li>{settingsFile}</li>
-            <li>gradle.properties</li>
-            <li>.gitignore</li>
-            <li>common/{buildFile}</li>
+    <div className="real-preview">
+      <div className="preview-toolbar">
+        <strong>{preview.folderName}/</strong>
+        <span>{preview.files.length} files</span>
+      </div>
 
-            {modProjects.map((projectName, index) => {
-              const className =
-                index === 0
-                  ? value.mainClass || 'Main'
-                  : `${toPascalCase(projectName)}Mod`;
+      <div className="preview-grid">
+        <div className="file-list" aria-label="Generated files">
+          {preview.files.map((file) => (
+            <button
+              key={file.path}
+              type="button"
+              className={selectedFile?.path === file.path ? 'selected' : ''}
+              disabled={file.binary}
+              onClick={() => setSelectedPath(file.path)}
+            >
+              <span>{file.path}</span>
+              {file.binary && <small>binary</small>}
+              {file.executable && <small>exec</small>}
+            </button>
+          ))}
+        </div>
 
-              const moduleSourceFile = `src/main/${sourceLang}/.../${className}.${sourceExt}`;
-
-              return (
-                <li key={projectName}>
-                  {projectName}/{buildFile}, {projectName}/{moduleSourceFile},{' '}
-                  {projectName}/src/main/resources/manifest.json
-                </li>
-              );
-            })}
-
-            <li>gradle/wrapper/gradle-wrapper.properties</li>
-            <li>gradle/wrapper/gradle-wrapper.jar</li>
-            <li>gradlew / gradlew.bat</li>
-            {value.versionCatalogMode !== 'none' && <li>gradle/libs.versions.toml</li>}
-          </>
-        ) : (
-          <>
-            <li>{buildFile}</li>
-            <li>{settingsFile}</li>
-            <li>{sourceFile}</li>
-            <li>src/main/resources/manifest.json</li>
-            <li>gradle.properties</li>
-            <li>.gitignore</li>
-            <li>gradle/wrapper/gradle-wrapper.properties</li>
-            <li>gradle/wrapper/gradle-wrapper.jar</li>
-            <li>gradlew / gradlew.bat</li>
-            {value.versionCatalogMode !== 'none' && <li>gradle/libs.versions.toml</li>}
-          </>
-        )}
-      </ul>
-
-      <pre className="preview-pre">{`group=${value.group}
-manifest_group=${value.manifestGroup}
-mod_name=${value.modName}
-mod_id=${value.modId}
-project_layout=${value.projectLayout}
-${isMultiProject ? `mod_projects=${modProjects.join(',')}\n` : ''}
-hytale_version=${value.hytaleVersion}
-manifestServerVersion = ${manifestServerVersion(value.hytaleVersion)}
-java_version=25
-includes_pack=${value.includesPack}
-disabled_by_default=${value.disabledByDefault}`}</pre>
-    </>
+        <div className="file-viewer">
+          {selectedFile ? (
+            <>
+              <div className="file-viewer-header">
+                <strong>{selectedFile.path}</strong>
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard.writeText(selectedFile.contents ?? '')}
+                >
+                  Copy
+                </button>
+              </div>
+              <pre>
+                <code>{selectedFile.contents}</code>
+              </pre>
+            </>
+          ) : (
+            <p className="muted">Select a text file to preview.</p>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
